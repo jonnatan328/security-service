@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <property name="APP_NAME" value="security-service"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{correlationId:-N/A}] %-5level %logger{36} - %msg%n"/>
+    <property name="LOG_PATTERN_COLOR" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight([%thread]) %cyan([%X{correlationId:-N/A}]) %highlight(%-5level) %magenta(%logger{36}) - %msg%n"/>
+
+    <!-- Console appender with colors for local/dev -->
+    <appender name="CONSOLE_PRETTY" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN_COLOR}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Console appender with JSON format for qa/prod -->
+    <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+                <logLevel/>
+                <loggerName>
+                    <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+                </loggerName>
+                <threadName/>
+                <mdc/>
+                <message/>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                        <maxLength>2048</maxLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+                <pattern>
+                    <pattern>
+                        {
+                            "app": "${APP_NAME}",
+                            "correlationId": "%X{correlationId:-N/A}"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Console plain appender (fallback for JSON when logstash is not available) -->
+    <appender name="CONSOLE_PLAIN" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Profile: local -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PRETTY"/>
+        </root>
+        <logger name="com.company.security" level="DEBUG"/>
+        <logger name="org.springframework.data.mongodb" level="DEBUG"/>
+        <logger name="org.springframework.data.redis" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Profile: dev -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PRETTY"/>
+        </root>
+        <logger name="com.company.security" level="DEBUG"/>
+        <logger name="org.springframework.security" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Profile: qa -->
+    <springProfile name="qa">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PLAIN"/>
+        </root>
+        <logger name="com.company.security" level="INFO"/>
+        <logger name="org.springframework.security" level="WARN"/>
+    </springProfile>
+
+    <!-- Profile: prod -->
+    <springProfile name="prod">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE_PLAIN"/>
+        </root>
+        <logger name="com.company.security" level="INFO"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.springframework.data" level="WARN"/>
+    </springProfile>
+
+    <!-- Default (no profile) -->
+    <springProfile name="default">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE_PRETTY"/>
+        </root>
+        <logger name="com.company.security" level="DEBUG"/>
+    </springProfile>
+
+</configuration>

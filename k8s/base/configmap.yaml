@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-service-config
+  labels:
+    app: security-service
+data:
+  SPRING_PROFILES_ACTIVE: "dev"
+  SERVER_PORT: "8080"
+  MONGODB_URI: "mongodb://mongodb:27017/security_db"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  LDAP_URL: "ldap://ldap:389"
+  LDAP_BASE: "dc=example,dc=com"
+  LDAP_USER_SEARCH_BASE: "ou=users"
+  LDAP_AD_ENABLED: "false"
+  CLIENT_SERVICE_URL: "http://client-service"
+  CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+  JWT_ISSUER: "security-service"
+  JWT_ACCESS_TOKEN_EXPIRATION: "900"
+  JWT_REFRESH_TOKEN_EXPIRATION: "604800"

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude DTOs (records are immutable) -->
+    <Match>
+        <Package name="~.*\.dto\..*"/>
+    </Match>
+
+    <!-- Exclude MongoDB documents -->
+    <Match>
+        <Package name="~.*\.document\..*"/>
+    </Match>
+
+    <!-- Exclude configuration classes -->
+    <Match>
+        <Package name="~.*\.config\..*"/>
+    </Match>
+
+    <!-- Exclude exception classes -->
+    <Match>
+        <Package name="~.*\.exception\..*"/>
+    </Match>
+
+    <!-- Exclude properties classes -->
+    <Match>
+        <Package name="~.*\.properties\..*"/>
+    </Match>
+
+    <!-- Exclude application entry point -->
+    <Match>
+        <Class name="com.company.security.SecurityServiceApplication"/>
+    </Match>
+
+    <!-- Exclude MapStruct generated mappers -->
+    <Match>
+        <Class name="~.*MapperImpl"/>
+    </Match>
+
+    <!-- Suppress EI_EXPOSE_REP for domain value objects (intentionally immutable) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Package name="~.*\.domain\.model\..*"/>
+    </Match>
+</FindBugsFilter>

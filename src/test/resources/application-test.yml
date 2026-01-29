@@ -1,0 +1,56 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/security_test_db
+    redis:
+      host: localhost
+      port: 6379
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+ldap:
+  url: ldap://localhost:389
+  base: dc=test,dc=com
+  manager-dn: cn=admin,dc=test,dc=com
+  manager-password: admin
+  user-search-base: ou=users
+  user-dn-attribute: uid
+  active-directory:
+    enabled: false
+    domain: test.com
+
+security:
+  jwt:
+    secret: TestSecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHMACSHA256!
+    access-token-expiration: 300
+    refresh-token-expiration: 3600
+    issuer: security-service-test
+
+  password:
+    reset-token-expiration: 15
+    min-length: 8
+    max-length: 128
+    require-uppercase: true
+    require-lowercase: true
+    require-digit: true
+    require-special-char: true
+    max-failed-attempts: 3
+    lock-duration: 15
+    reset-base-url: http://localhost:3000/reset-password
+
+  cors:
+    allowed-origins: http://localhost:3000
+
+services:
+  client-service:
+    base-url: http://localhost:8081
+    timeout: 5000
+
+logging:
+  level:
+    root: WARN
+    com.company.security: DEBUG

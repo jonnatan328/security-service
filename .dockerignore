@@ -1,0 +1,8 @@
+.gradle
+build
+.idea
+*.iml
+.git
+*.md
+k8s
+config/spotbugs
