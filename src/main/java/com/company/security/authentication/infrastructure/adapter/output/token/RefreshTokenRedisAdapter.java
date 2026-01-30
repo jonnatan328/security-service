@@ -1,14 +1,13 @@
 package com.company.security.authentication.infrastructure.adapter.output.token;
 
 import com.company.security.authentication.domain.model.TokenClaims;
-import com.company.security.authentication.infrastructure.application.port.output.RefreshTokenPort;
+import com.company.security.authentication.domain.port.output.RefreshTokenPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -19,7 +18,6 @@ import java.util.*;
  * Redis adapter for refresh token storage.
  * Stores refresh token claims with TTL for session management.
  */
-@Component
 public class RefreshTokenRedisAdapter implements RefreshTokenPort {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenRedisAdapter.class);

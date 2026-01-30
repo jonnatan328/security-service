@@ -161,7 +161,7 @@ tasks.jacocoTestCoverageVerification {
         }
         rule {
             element = "CLASS"
-            includes = listOf("com.company.security.*.infrastructure.application.usecase.*")
+            includes = listOf("com.company.security.*.domain.usecase.*")
             limit {
                 minimum = "0.90".toBigDecimal()
             }
@@ -210,7 +210,7 @@ sonar {
 // Pitest Configuration
 pitest {
     junit5PluginVersion.set("1.2.1")
-    targetClasses.set(listOf("com.company.security.*.infrastructure.application.usecase.*"))
+    targetClasses.set(listOf("com.company.security.*.domain.usecase.*"))
     targetTests.set(listOf("com.company.security.*.*Test", "com.company.security.*.*Tests"))
     mutationThreshold.set(70)
     coverageThreshold.set(80)

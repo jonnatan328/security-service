@@ -4,14 +4,13 @@ import com.company.security.authentication.domain.exception.DirectoryServiceExce
 import com.company.security.authentication.domain.exception.InvalidCredentialsException;
 import com.company.security.authentication.domain.model.AuthenticatedUser;
 import com.company.security.authentication.domain.model.Credentials;
-import com.company.security.authentication.infrastructure.application.port.output.DirectoryServicePort;
+import com.company.security.authentication.domain.port.output.DirectoryServicePort;
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.ldap.AuthenticationException;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.LdapTemplate;
@@ -19,7 +18,6 @@ import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.ldap.filter.EqualsFilter;
 import org.springframework.ldap.query.LdapQuery;
 import org.springframework.ldap.query.LdapQueryBuilder;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -27,8 +25,6 @@ import reactor.core.scheduler.Schedulers;
  * LDAP Directory Service adapter implementation.
  * Provides authentication against generic LDAP servers.
  */
-@Component
-@ConditionalOnProperty(name = "ldap.active-directory.enabled", havingValue = "false", matchIfMissing = true)
 public class LdapDirectoryAdapter implements DirectoryServicePort {
 
     private static final Logger log = LoggerFactory.getLogger(LdapDirectoryAdapter.class);

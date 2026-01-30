@@ -6,15 +6,12 @@ import com.company.security.authentication.infrastructure.adapter.input.rest.dto
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.AuthenticationResponse;
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.TokenResponse;
 import com.company.security.authentication.infrastructure.adapter.input.rest.mapper.AuthenticationRestMapper;
-import com.company.security.authentication.infrastructure.application.port.input.RefreshTokenUseCase;
-import com.company.security.authentication.infrastructure.application.port.input.SignInUseCase;
-import com.company.security.authentication.infrastructure.application.port.input.SignOutUseCase;
-import jakarta.validation.Valid;
+import com.company.security.authentication.domain.port.input.RefreshTokenUseCase;
+import com.company.security.authentication.domain.port.input.SignInUseCase;
+import com.company.security.authentication.domain.port.input.SignOutUseCase;
 import jakarta.validation.Validator;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -27,7 +24,6 @@ import java.util.Optional;
 /**
  * Handler for authentication REST endpoints.
  */
-@Component
 public class AuthenticationHandler {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";

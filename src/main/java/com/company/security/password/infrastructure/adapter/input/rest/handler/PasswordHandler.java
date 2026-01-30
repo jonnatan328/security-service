@@ -5,13 +5,12 @@ import com.company.security.password.infrastructure.adapter.input.rest.dto.reque
 import com.company.security.password.infrastructure.adapter.input.rest.dto.request.UpdatePasswordRequest;
 import com.company.security.password.infrastructure.adapter.input.rest.dto.response.PasswordOperationResponse;
 import com.company.security.password.infrastructure.adapter.input.rest.mapper.PasswordRestMapper;
-import com.company.security.password.infrastructure.application.port.input.RecoverPasswordUseCase;
-import com.company.security.password.infrastructure.application.port.input.ResetPasswordUseCase;
-import com.company.security.password.infrastructure.application.port.input.UpdatePasswordUseCase;
+import com.company.security.password.domain.port.input.RecoverPasswordUseCase;
+import com.company.security.password.domain.port.input.ResetPasswordUseCase;
+import com.company.security.password.domain.port.input.UpdatePasswordUseCase;
 import jakarta.validation.Validator;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -22,7 +21,6 @@ import reactor.core.publisher.Mono;
 import java.security.Principal;
 import java.util.Optional;
 
-@Component
 public class PasswordHandler {
 
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";

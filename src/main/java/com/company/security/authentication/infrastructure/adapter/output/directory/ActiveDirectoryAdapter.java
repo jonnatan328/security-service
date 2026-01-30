@@ -6,14 +6,13 @@ import com.company.security.authentication.domain.exception.DirectoryServiceExce
 import com.company.security.authentication.domain.exception.InvalidCredentialsException;
 import com.company.security.authentication.domain.model.AuthenticatedUser;
 import com.company.security.authentication.domain.model.Credentials;
-import com.company.security.authentication.infrastructure.application.port.output.DirectoryServicePort;
+import com.company.security.authentication.domain.port.output.DirectoryServicePort;
 import com.company.security.shared.infrastructure.properties.ActiveDirectoryProperties;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
@@ -23,7 +22,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -31,8 +29,6 @@ import reactor.core.scheduler.Schedulers;
  * Active Directory adapter implementation.
  * Provides authentication specifically against Microsoft Active Directory.
  */
-@Component
-@ConditionalOnProperty(name = "ldap.active-directory.enabled", havingValue = "true")
 public class ActiveDirectoryAdapter implements DirectoryServicePort {
 
     private static final Logger log = LoggerFactory.getLogger(ActiveDirectoryAdapter.class);

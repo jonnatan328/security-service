@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 @DisplayName("Architecture Tests")
 class ArchitectureTest {
@@ -76,7 +75,7 @@ class ArchitectureTest {
         @DisplayName("Input ports should not depend on adapters")
         void inputPortsShouldNotDependOnAdapters() {
             noClasses()
-                    .that().resideInAPackage("..application.port.input..")
+                    .that().resideInAPackage("..domain.port.input..")
                     .should().dependOnClassesThat().resideInAPackage("..adapter..")
                     .because("Input ports should not know about adapters")
                     .check(importedClasses);
@@ -86,7 +85,7 @@ class ArchitectureTest {
         @DisplayName("Output ports should not depend on adapters")
         void outputPortsShouldNotDependOnAdapters() {
             noClasses()
-                    .that().resideInAPackage("..application.port.output..")
+                    .that().resideInAPackage("..domain.port.output..")
                     .should().dependOnClassesThat().resideInAPackage("..adapter..")
                     .because("Output ports should not know about adapters")
                     .check(importedClasses);
@@ -138,7 +137,7 @@ class ArchitectureTest {
         @DisplayName("Use case implementations should end with UseCaseImpl")
         void useCaseImplNaming() {
             classes()
-                    .that().resideInAPackage("..application.usecase..")
+                    .that().resideInAPackage("..domain.usecase..")
                     .should().haveSimpleNameEndingWith("UseCaseImpl")
                     .because("Use case implementations should follow naming convention")
                     .check(importedClasses);
@@ -148,7 +147,7 @@ class ArchitectureTest {
         @DisplayName("Input ports should end with UseCase")
         void inputPortNaming() {
             classes()
-                    .that().resideInAPackage("..application.port.input..")
+                    .that().resideInAPackage("..domain.port.input..")
                     .should().haveSimpleNameEndingWith("UseCase")
                     .because("Input ports should be named as use cases")
                     .check(importedClasses);
@@ -158,10 +157,35 @@ class ArchitectureTest {
         @DisplayName("Output ports should end with Port")
         void outputPortNaming() {
             classes()
-                    .that().resideInAPackage("..application.port.output..")
+                    .that().resideInAPackage("..domain.port.output..")
                     .and().areTopLevelClasses()
                     .should().haveSimpleNameEndingWith("Port")
                     .because("Output ports should follow naming convention")
+                    .check(importedClasses);
+        }
+    }
+
+    @Nested
+    @DisplayName("Annotation Rules")
+    class AnnotationRules {
+
+        @Test
+        @DisplayName("Adapters should not have @Component annotation")
+        void adaptersShouldNotHaveComponent() {
+            noClasses()
+                    .that().resideInAPackage("..adapter..")
+                    .should().beAnnotatedWith(org.springframework.stereotype.Component.class)
+                    .because("Adapters should be wired via @Bean configuration, not @Component")
+                    .check(importedClasses);
+        }
+
+        @Test
+        @DisplayName("Use cases should not have @Service annotation")
+        void useCasesShouldNotHaveService() {
+            noClasses()
+                    .that().resideInAPackage("..domain.usecase..")
+                    .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
+                    .because("Use cases should be wired via @Bean configuration, not @Service")
                     .check(importedClasses);
         }
     }

@@ -1,20 +1,18 @@
 package com.company.security.password.infrastructure.adapter.output.messaging;
 
 import com.company.security.password.domain.model.PasswordResetToken;
-import com.company.security.password.infrastructure.application.port.output.EventPublisherPort;
+import com.company.security.password.domain.port.output.EventPublisherPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-@Component
 public class PasswordEventPublisherAdapter implements EventPublisherPort {
 
     private static final Logger log = LoggerFactory.getLogger(PasswordEventPublisherAdapter.class);

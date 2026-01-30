@@ -3,7 +3,7 @@ package com.company.security.authentication.infrastructure.adapter.output.token;
 import com.company.security.authentication.domain.model.AuthenticatedUser;
 import com.company.security.authentication.domain.model.TokenClaims;
 import com.company.security.authentication.domain.model.TokenPair;
-import com.company.security.authentication.infrastructure.application.port.output.TokenProviderPort;
+import com.company.security.authentication.domain.port.output.TokenProviderPort;
 import com.company.security.shared.infrastructure.properties.JwtProperties;
 import com.company.security.token.domain.exception.InvalidTokenException;
 import com.company.security.token.domain.exception.TokenExpiredException;
@@ -12,7 +12,6 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
  * JWT Token Provider adapter implementation.
  * Handles JWT token generation and parsing.
  */
-@Component
 public class JwtTokenProviderAdapter implements TokenProviderPort {
 
     private static final Logger log = LoggerFactory.getLogger(JwtTokenProviderAdapter.class);

@@ -1,16 +1,16 @@
 package com.company.security.token.infrastructure.config;
 
-import com.company.security.authentication.infrastructure.adapter.output.token.JwtTokenProviderAdapter;
-import com.company.security.authentication.infrastructure.adapter.output.token.TokenBlacklistRedisAdapter;
-import com.company.security.authentication.domain.model.TokenClaims;
+import com.company.security.authentication.domain.port.output.TokenBlacklistPort;
+import com.company.security.authentication.domain.port.output.TokenProviderPort;
 import com.company.security.token.domain.model.Token;
-import com.company.security.token.infrastructure.application.port.output.TokenBlacklistCheckPort;
-import com.company.security.token.infrastructure.application.port.output.TokenIntrospectionPort;
-import com.company.security.authentication.infrastructure.application.port.output.TokenProviderPort;
-import com.company.security.authentication.infrastructure.application.port.output.TokenBlacklistPort;
+import com.company.security.token.domain.port.input.ValidateTokenUseCase;
+import com.company.security.token.domain.port.output.TokenBlacklistCheckPort;
+import com.company.security.token.domain.port.output.TokenIntrospectionPort;
+import com.company.security.token.domain.usecase.ValidateTokenUseCaseImpl;
+import com.company.security.token.infrastructure.adapter.input.rest.handler.TokenValidationHandler;
+import com.company.security.token.infrastructure.adapter.input.rest.mapper.TokenRestMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import reactor.core.publisher.Mono;
 
 /**
  * Bean configuration for token feature.
@@ -38,5 +38,24 @@ public class TokenBeanConfig {
     @Bean
     public TokenBlacklistCheckPort tokenBlacklistCheckPort(TokenBlacklistPort tokenBlacklistPort) {
         return tokenBlacklistPort::isBlacklisted;
+    }
+
+    @Bean
+    public ValidateTokenUseCase validateTokenUseCase(
+            TokenIntrospectionPort tokenIntrospectionPort,
+            TokenBlacklistCheckPort tokenBlacklistCheckPort) {
+        return new ValidateTokenUseCaseImpl(tokenIntrospectionPort, tokenBlacklistCheckPort);
+    }
+
+    @Bean
+    public TokenRestMapper tokenRestMapper() {
+        return new TokenRestMapper();
+    }
+
+    @Bean
+    public TokenValidationHandler tokenValidationHandler(
+            ValidateTokenUseCase validateTokenUseCase,
+            TokenRestMapper tokenRestMapper) {
+        return new TokenValidationHandler(validateTokenUseCase, tokenRestMapper);
     }
 }

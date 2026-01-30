@@ -2,12 +2,10 @@ package com.company.security.password.infrastructure.adapter.output.persistence;
 
 import com.company.security.password.infrastructure.adapter.output.persistence.document.PasswordAuditDocument;
 import com.company.security.password.infrastructure.adapter.output.persistence.repository.PasswordAuditRepository;
-import com.company.security.password.infrastructure.application.port.output.PasswordAuditPort;
+import com.company.security.password.domain.port.output.PasswordAuditPort;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
 public class PasswordAuditMongoAdapter implements PasswordAuditPort {
 
     private final PasswordAuditRepository repository;

@@ -2,7 +2,6 @@ package com.company.security.authentication.infrastructure.adapter.output.direct
 
 import com.company.security.authentication.domain.model.AuthenticatedUser;
 import org.springframework.ldap.core.DirContextOperations;
-import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -12,7 +11,6 @@ import java.util.stream.Collectors;
 /**
  * Mapper for converting LDAP/AD directory context to AuthenticatedUser.
  */
-@Component
 public class DirectoryUserMapper {
 
     // LDAP attribute names

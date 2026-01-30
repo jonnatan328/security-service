@@ -1,10 +1,9 @@
 package com.company.security.authentication.infrastructure.adapter.output.token;
 
-import com.company.security.authentication.infrastructure.application.port.output.TokenBlacklistPort;
+import com.company.security.authentication.domain.port.output.TokenBlacklistPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -13,7 +12,6 @@ import java.time.Duration;
  * Redis adapter for token blacklist operations.
  * Stores invalidated token JTIs with TTL.
  */
-@Component
 public class TokenBlacklistRedisAdapter implements TokenBlacklistPort {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBlacklistRedisAdapter.class);

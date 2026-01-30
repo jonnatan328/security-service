@@ -11,11 +11,16 @@ Construye un microservicio de **Seguridad/Autenticación** usando Screaming Arch
 - Cada feature es autónomo y contiene todo lo necesario para funcionar
 
 ### Ubicación de Capas
-- **domain/**: Núcleo puro, CERO dependencias externas (ni Spring, ni librerías)
+- **domain/**: Núcleo puro, CERO dependencias externas (ni Spring, ni librerías), incluyendo:
+  - **model/**: Value Objects inmutables y entidades de dominio
+  - **exception/**: Excepciones de dominio
+  - **service/**: Servicios de dominio puros
+  - **port/input/**: Interfaces de casos de uso (puertos de entrada)
+  - **port/output/**: Interfaces de puertos de salida (driven ports)
+  - **usecase/**: Implementaciones de casos de uso (sin @Service, wired via @Bean)
 - **infrastructure/**: Todo lo que tiene dependencias externas, incluyendo:
-  - **application/**: Puertos y casos de uso (puede usar anotaciones de Spring)
-  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, clientes HTTP)
-  - **config/**: Configuración de beans del feature
+  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, clientes HTTP) - sin @Component, wired via @Bean
+  - **config/**: Configuración de beans del feature (wiring explícito con @Bean)
 
 ## Dominio de Negocio: Security Service
 
@@ -60,7 +65,7 @@ Construye un microservicio de **Seguridad/Autenticación** usando Screaming Arch
 ```
 src/main/java/com/company/security/
 │
-├── authentication/                                # 🔐 FEATURE: Authentication
+├── authentication/                                # FEATURE: Authentication
 │   ├── domain/
 │   │   ├── model/
 │   │   │   ├── AuthenticatedUser.java
@@ -74,26 +79,25 @@ src/main/java/com/company/security/
 │   │   │   ├── AccountLockedException.java
 │   │   │   ├── AccountDisabledException.java
 │   │   │   └── DirectoryServiceException.java
-│   │   └── service/
-│   │       └── AuthenticationDomainService.java
+│   │   ├── service/
+│   │   │   └── AuthenticationDomainService.java
+│   │   ├── port/
+│   │   │   ├── input/
+│   │   │   │   ├── SignInUseCase.java
+│   │   │   │   ├── SignOutUseCase.java
+│   │   │   │   └── RefreshTokenUseCase.java
+│   │   │   └── output/
+│   │   │       ├── DirectoryServicePort.java
+│   │   │       ├── TokenProviderPort.java
+│   │   │       ├── TokenBlacklistPort.java
+│   │   │       ├── RefreshTokenPort.java
+│   │   │       └── AuthAuditPort.java
+│   │   └── usecase/
+│   │       ├── SignInUseCaseImpl.java
+│   │       ├── SignOutUseCaseImpl.java
+│   │       └── RefreshTokenUseCaseImpl.java
 │   │
 │   └── infrastructure/
-│       ├── application/
-│       │   ├── port/
-│       │   │   ├── input/
-│       │   │   │   ├── SignInUseCase.java
-│       │   │   │   ├── SignOutUseCase.java
-│       │   │   │   └── RefreshTokenUseCase.java
-│       │   │   └── output/
-│       │   │       ├── DirectoryServicePort.java
-│       │   │       ├── TokenProviderPort.java
-│       │   │       ├── TokenBlacklistPort.java
-│       │   │       ├── RefreshTokenPort.java
-│       │   │       └── AuthAuditPort.java
-│       │   └── usecase/
-│       │       ├── SignInUseCaseImpl.java
-│       │       ├── SignOutUseCaseImpl.java
-│       │       └── RefreshTokenUseCaseImpl.java
 │       ├── adapter/
 │       │   ├── input/rest/
 │       │   │   ├── handler/
@@ -128,13 +132,14 @@ src/main/java/com/company/security/
 │       └── config/
 │           └── AuthenticationBeanConfig.java
 │
-├── password/                                      # 🔑 FEATURE: Password Management
+├── password/                                      # FEATURE: Password Management
 │   ├── domain/
 │   │   ├── model/
 │   │   │   ├── Password.java
 │   │   │   ├── PasswordResetToken.java
 │   │   │   ├── PasswordPolicy.java
-│   │   │   └── PasswordChangeResult.java
+│   │   │   ├── PasswordChangeResult.java
+│   │   │   └── PasswordRecoverySettings.java
 │   │   ├── exception/
 │   │   │   ├── PasswordException.java
 │   │   │   ├── PasswordValidationException.java
@@ -142,26 +147,25 @@ src/main/java/com/company/security/
 │   │   │   ├── PasswordResetTokenInvalidException.java
 │   │   │   ├── CurrentPasswordMismatchException.java
 │   │   │   └── PasswordHistoryViolationException.java
-│   │   └── service/
-│   │       └── PasswordPolicyService.java
+│   │   ├── service/
+│   │   │   └── PasswordPolicyService.java
+│   │   ├── port/
+│   │   │   ├── input/
+│   │   │   │   ├── RecoverPasswordUseCase.java
+│   │   │   │   ├── ResetPasswordUseCase.java
+│   │   │   │   └── UpdatePasswordUseCase.java
+│   │   │   └── output/
+│   │   │       ├── PasswordResetTokenPort.java
+│   │   │       ├── DirectoryPasswordPort.java
+│   │   │       ├── EventPublisherPort.java
+│   │   │       ├── UserLookupPort.java
+│   │   │       └── PasswordAuditPort.java
+│   │   └── usecase/
+│   │       ├── RecoverPasswordUseCaseImpl.java
+│   │       ├── ResetPasswordUseCaseImpl.java
+│   │       └── UpdatePasswordUseCaseImpl.java
 │   │
 │   └── infrastructure/
-│       ├── application/
-│       │   ├── port/
-│       │   │   ├── input/
-│       │   │   │   ├── RecoverPasswordUseCase.java
-│       │   │   │   ├── ResetPasswordUseCase.java
-│       │   │   │   └── UpdatePasswordUseCase.java
-│       │   │   └── output/
-│       │   │       ├── PasswordResetTokenPort.java
-│       │   │       ├── DirectoryPasswordPort.java
-│       │   │       ├── EventPublisherPort.java
-│       │   │       ├── UserLookupPort.java
-│       │   │       └── PasswordAuditPort.java
-│       │   └── usecase/
-│       │       ├── RecoverPasswordUseCaseImpl.java
-│       │       ├── ResetPasswordUseCaseImpl.java
-│       │       └── UpdatePasswordUseCaseImpl.java
 │       ├── adapter/
 │       │   ├── input/rest/
 │       │   │   ├── handler/
@@ -198,28 +202,27 @@ src/main/java/com/company/security/
 │       └── config/
 │           └── PasswordBeanConfig.java
 │
-├── token/                                         # 🎫 FEATURE: Token Validation (Internal)
+├── token/                                         # FEATURE: Token Validation (Internal)
 │   ├── domain/
 │   │   ├── model/
 │   │   │   ├── Token.java
 │   │   │   ├── TokenValidationResult.java
 │   │   │   └── TokenStatus.java
-│   │   └── exception/
-│   │       ├── TokenException.java
-│   │       ├── InvalidTokenException.java
-│   │       ├── TokenExpiredException.java
-│   │       └── TokenRevokedException.java
+│   │   ├── exception/
+│   │   │   ├── TokenException.java
+│   │   │   ├── InvalidTokenException.java
+│   │   │   ├── TokenExpiredException.java
+│   │   │   └── TokenRevokedException.java
+│   │   ├── port/
+│   │   │   ├── input/
+│   │   │   │   └── ValidateTokenUseCase.java
+│   │   │   └── output/
+│   │   │       ├── TokenIntrospectionPort.java
+│   │   │       └── TokenBlacklistCheckPort.java
+│   │   └── usecase/
+│   │       └── ValidateTokenUseCaseImpl.java
 │   │
 │   └── infrastructure/
-│       ├── application/
-│       │   ├── port/
-│       │   │   ├── input/
-│       │   │   │   └── ValidateTokenUseCase.java
-│       │   │   └── output/
-│       │   │       ├── TokenIntrospectionPort.java
-│       │   │       └── TokenBlacklistCheckPort.java
-│       │   └── usecase/
-│       │       └── ValidateTokenUseCaseImpl.java
 │       ├── adapter/
 │       │   └── input/rest/
 │       │       ├── handler/
@@ -236,7 +239,7 @@ src/main/java/com/company/security/
 │       └── config/
 │           └── TokenBeanConfig.java
 │
-├── shared/                                        # 🔧 SHARED: Cross-cutting concerns
+├── shared/                                        # SHARED: Cross-cutting concerns
 │   ├── domain/
 │   │   ├── model/
 │   │   │   └── Email.java
@@ -519,7 +522,7 @@ El proveedor de directorio aún no está definido, por lo tanto:
 
 ### Unit Tests
 - domain/service/* → Lógica de dominio pura
-- infrastructure/application/usecase/* → Casos de uso con mocks de puertos
+- domain/usecase/* → Casos de uso con mocks de puertos
 
 ### Integration Tests
 - adapter/input/rest/* → WebTestClient + StepVerifier
@@ -530,9 +533,11 @@ El proveedor de directorio aún no está definido, por lo tanto:
 ### Architecture Tests (ArchUnit)
 - domain no depende de infrastructure
 - domain no depende de Spring ni librerías externas
-- application.port.input no depende de adapters
+- domain.port.input no depende de adapters
+- domain.port.output no depende de adapters
 - Cada feature solo depende de shared y su propio código
-- Adapters implementan sus respectivos ports
+- Adapters no tienen @Component (wired via @Bean en config)
+- Use cases no tienen @Service (wired via @Bean en config)
 
 ## Instrucciones de Generación
 

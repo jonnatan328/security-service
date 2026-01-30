@@ -7,12 +7,9 @@ import com.company.security.authentication.domain.model.TokenPair;
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.request.SignInRequest;
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.AuthenticationResponse;
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.TokenResponse;
-import org.springframework.stereotype.Component;
-
 /**
  * Mapper for authentication REST layer.
  */
-@Component
 public class AuthenticationRestMapper {
 
     public Credentials toCredentials(SignInRequest request) {

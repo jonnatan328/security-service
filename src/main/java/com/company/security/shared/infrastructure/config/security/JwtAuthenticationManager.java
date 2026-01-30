@@ -1,8 +1,8 @@
 package com.company.security.shared.infrastructure.config.security;
 
 import com.company.security.authentication.domain.model.TokenClaims;
-import com.company.security.authentication.infrastructure.application.port.output.TokenBlacklistPort;
-import com.company.security.authentication.infrastructure.application.port.output.TokenProviderPort;
+import com.company.security.authentication.domain.port.output.TokenBlacklistPort;
+import com.company.security.authentication.domain.port.output.TokenProviderPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;

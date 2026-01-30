@@ -1,6 +1,6 @@
 package com.company.security.password.infrastructure.adapter.output.directory;
 
-import com.company.security.password.infrastructure.application.port.output.DirectoryPasswordPort;
+import com.company.security.password.domain.port.output.DirectoryPasswordPort;
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -16,7 +15,6 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 
-@Component
 public class DirectoryPasswordAdapter implements DirectoryPasswordPort {
 
     private static final Logger log = LoggerFactory.getLogger(DirectoryPasswordAdapter.class);

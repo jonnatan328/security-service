@@ -3,14 +3,12 @@ package com.company.security.password.infrastructure.adapter.output.persistence;
 import com.company.security.password.domain.model.PasswordResetToken;
 import com.company.security.password.infrastructure.adapter.output.persistence.document.PasswordResetTokenDocument;
 import com.company.security.password.infrastructure.adapter.output.persistence.repository.PasswordResetTokenRepository;
-import com.company.security.password.infrastructure.application.port.output.PasswordResetTokenPort;
+import com.company.security.password.domain.port.output.PasswordResetTokenPort;
 import com.company.security.shared.domain.model.Email;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 
-@Component
 public class PasswordResetTokenMongoAdapter implements PasswordResetTokenPort {
 
     private final PasswordResetTokenRepository repository;

@@ -2,17 +2,15 @@ package com.company.security.authentication.infrastructure.adapter.output.persis
 
 import com.company.security.authentication.infrastructure.adapter.output.persistence.document.AuthAuditDocument;
 import com.company.security.authentication.infrastructure.adapter.output.persistence.repository.AuthAuditRepository;
-import com.company.security.authentication.infrastructure.application.port.output.AuthAuditPort;
+import com.company.security.authentication.domain.port.output.AuthAuditPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 /**
  * MongoDB adapter for authentication audit logging.
  */
-@Component
 public class AuthAuditMongoAdapter implements AuthAuditPort {
 
     private static final Logger log = LoggerFactory.getLogger(AuthAuditMongoAdapter.class);
