@@ -4,25 +4,40 @@
     <Match>
         <Package name="~.*\.dto\..*"/>
     </Match>
+    <Match>
+        <Package name="~.*\.dto"/>
+    </Match>
 
     <!-- Exclude MongoDB documents -->
     <Match>
         <Package name="~.*\.document\..*"/>
+    </Match>
+    <Match>
+        <Package name="~.*\.document"/>
     </Match>
 
     <!-- Exclude configuration classes -->
     <Match>
         <Package name="~.*\.config\..*"/>
     </Match>
+    <Match>
+        <Package name="~.*\.config"/>
+    </Match>
 
     <!-- Exclude exception classes -->
     <Match>
         <Package name="~.*\.exception\..*"/>
     </Match>
+    <Match>
+        <Package name="~.*\.exception"/>
+    </Match>
 
     <!-- Exclude properties classes -->
     <Match>
         <Package name="~.*\.properties\..*"/>
+    </Match>
+    <Match>
+        <Package name="~.*\.properties"/>
     </Match>
 
     <!-- Exclude application entry point -->
@@ -38,6 +53,32 @@
     <!-- Suppress EI_EXPOSE_REP for domain value objects (intentionally immutable) -->
     <Match>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+        <Package name="~.*\.domain\.model"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
         <Package name="~.*\.domain\.model\..*"/>
+    </Match>
+
+    <!-- Suppress EI_EXPOSE_REP2 for Spring-managed beans (constructor injection) -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~.*\.usecase"/>
+    </Match>
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+        <Package name="~.*\.adapter\..*"/>
+    </Match>
+
+    <!-- Suppress UPM_UNCALLED_PRIVATE_METHOD for Resilience4j fallback methods -->
+    <Match>
+        <Bug pattern="UPM_UNCALLED_PRIVATE_METHOD"/>
+        <Method name="~.*[Ff]allback.*"/>
+    </Match>
+
+    <!-- Suppress CT_CONSTRUCTOR_THROW for adapter classes (Spring manages lifecycle) -->
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+        <Package name="~.*\.adapter\..*"/>
     </Match>
 </FindBugsFilter>

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,9 +45,9 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
 
     public JwtTokenProviderAdapter(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.accessTokenKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
+        this.accessTokenKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
         this.refreshTokenKey = Keys.hmacShaKeyFor(
-                (jwtProperties.getSecret() + "-refresh").getBytes());
+                (jwtProperties.getSecret() + "-refresh").getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -90,7 +91,7 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
             if (parts.length != 3) {
                 return null;
             }
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
             // Simple extraction - in production, use proper JSON parsing
             int jtiStart = payload.indexOf("\"jti\":\"");
             if (jtiStart == -1) {
