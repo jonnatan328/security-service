@@ -3,23 +3,19 @@ package com.company.security.authentication.infrastructure.config;
 import com.company.security.authentication.domain.port.input.RefreshTokenUseCase;
 import com.company.security.authentication.domain.port.input.SignInUseCase;
 import com.company.security.authentication.domain.port.input.SignOutUseCase;
-import com.company.security.authentication.domain.port.output.*;
-import com.company.security.authentication.domain.service.AuthenticationDomainService;
-import com.company.security.authentication.domain.usecase.RefreshTokenUseCaseImpl;
-import com.company.security.authentication.domain.usecase.SignInUseCaseImpl;
-import com.company.security.authentication.domain.usecase.SignOutUseCaseImpl;
 import com.company.security.authentication.infrastructure.adapter.input.rest.handler.AuthenticationHandler;
 import com.company.security.authentication.infrastructure.adapter.input.rest.mapper.AuthenticationRestMapper;
-import com.company.security.authentication.infrastructure.adapter.output.directory.ActiveDirectoryAdapter;
 import com.company.security.authentication.infrastructure.adapter.output.directory.DirectoryUserMapper;
+import com.company.security.authentication.infrastructure.adapter.output.directory.KeycloakDirectoryAdapter;
+import com.company.security.authentication.infrastructure.adapter.output.directory.KeycloakUserMapper;
 import com.company.security.authentication.infrastructure.adapter.output.directory.LdapDirectoryAdapter;
 import com.company.security.authentication.infrastructure.adapter.output.persistence.AuthAuditMongoAdapter;
 import com.company.security.authentication.infrastructure.adapter.output.persistence.repository.AuthAuditRepository;
 import com.company.security.authentication.infrastructure.adapter.output.token.JwtTokenProviderAdapter;
 import com.company.security.authentication.infrastructure.adapter.output.token.RefreshTokenRedisAdapter;
 import com.company.security.authentication.infrastructure.adapter.output.token.TokenBlacklistRedisAdapter;
-import com.company.security.shared.infrastructure.properties.ActiveDirectoryProperties;
 import com.company.security.shared.infrastructure.properties.JwtProperties;
+import com.company.security.shared.infrastructure.properties.KeycloakProperties;
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Validator;
@@ -29,18 +25,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
-import org.springframework.security.ldap.authentication.ad.ActiveDirectoryLdapAuthenticationProvider;
+import org.springframework.web.reactive.function.client.WebClient;
 
 /**
- * Bean configuration for authentication feature.
+ * Infrastructure bean configuration for authentication feature.
+ * Wires adapters, mappers and handlers.
  */
 @Configuration
-public class AuthenticationBeanConfig {
-
-    @Bean
-    public AuthenticationDomainService authenticationDomainService() {
-        return new AuthenticationDomainService();
-    }
+public class AuthenticationInfrastructureConfig {
 
     @Bean
     public DirectoryUserMapper directoryUserMapper() {
@@ -48,7 +40,7 @@ public class AuthenticationBeanConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "ldap.active-directory.enabled", havingValue = "false", matchIfMissing = true)
+    @ConditionalOnProperty(name = "auth.provider", havingValue = "ldap", matchIfMissing = true)
     public LdapDirectoryAdapter ldapDirectoryAdapter(
             LdapTemplate ldapTemplate,
             LdapContextSource ldapContextSource,
@@ -58,13 +50,19 @@ public class AuthenticationBeanConfig {
     }
 
     @Bean
-    @ConditionalOnProperty(name = "ldap.active-directory.enabled", havingValue = "true")
-    public ActiveDirectoryAdapter activeDirectoryAdapter(
-            ActiveDirectoryLdapAuthenticationProvider adProvider,
-            LdapContextSource ldapContextSource,
-            DirectoryUserMapper directoryUserMapper,
-            ActiveDirectoryProperties adProperties) {
-        return new ActiveDirectoryAdapter(adProvider, ldapContextSource, directoryUserMapper, adProperties);
+    @ConditionalOnProperty(name = "auth.provider", havingValue = "keycloak")
+    public KeycloakUserMapper keycloakUserMapper(KeycloakProperties keycloakProperties) {
+        return new KeycloakUserMapper(keycloakProperties);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "auth.provider", havingValue = "keycloak")
+    public KeycloakDirectoryAdapter keycloakDirectoryAdapter(
+            WebClient.Builder webClientBuilder,
+            KeycloakProperties keycloakProperties,
+            KeycloakUserMapper keycloakUserMapper,
+            ObjectMapper objectMapper) {
+        return new KeycloakDirectoryAdapter(webClientBuilder, keycloakProperties, keycloakUserMapper, objectMapper);
     }
 
     @Bean
@@ -87,38 +85,6 @@ public class AuthenticationBeanConfig {
     @Bean
     public AuthAuditMongoAdapter authAuditMongoAdapter(AuthAuditRepository authAuditRepository) {
         return new AuthAuditMongoAdapter(authAuditRepository);
-    }
-
-    @Bean
-    public SignInUseCase signInUseCase(
-            DirectoryServicePort directoryServicePort,
-            TokenProviderPort tokenProviderPort,
-            RefreshTokenPort refreshTokenPort,
-            AuthAuditPort authAuditPort,
-            AuthenticationDomainService authenticationDomainService) {
-        return new SignInUseCaseImpl(directoryServicePort, tokenProviderPort, refreshTokenPort,
-                authAuditPort, authenticationDomainService);
-    }
-
-    @Bean
-    public SignOutUseCase signOutUseCase(
-            TokenProviderPort tokenProviderPort,
-            TokenBlacklistPort tokenBlacklistPort,
-            RefreshTokenPort refreshTokenPort,
-            AuthAuditPort authAuditPort) {
-        return new SignOutUseCaseImpl(tokenProviderPort, tokenBlacklistPort, refreshTokenPort, authAuditPort);
-    }
-
-    @Bean
-    public RefreshTokenUseCase refreshTokenUseCase(
-            TokenProviderPort tokenProviderPort,
-            TokenBlacklistPort tokenBlacklistPort,
-            RefreshTokenPort refreshTokenPort,
-            DirectoryServicePort directoryServicePort,
-            AuthAuditPort authAuditPort,
-            AuthenticationDomainService authenticationDomainService) {
-        return new RefreshTokenUseCaseImpl(tokenProviderPort, tokenBlacklistPort, refreshTokenPort,
-                directoryServicePort, authAuditPort, authenticationDomainService);
     }
 
     @Bean

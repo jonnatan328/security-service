@@ -6,18 +6,17 @@ import com.company.security.token.domain.model.Token;
 import com.company.security.token.domain.port.input.ValidateTokenUseCase;
 import com.company.security.token.domain.port.output.TokenBlacklistCheckPort;
 import com.company.security.token.domain.port.output.TokenIntrospectionPort;
-import com.company.security.token.domain.usecase.ValidateTokenUseCaseImpl;
 import com.company.security.token.infrastructure.adapter.input.rest.handler.TokenValidationHandler;
 import com.company.security.token.infrastructure.adapter.input.rest.mapper.TokenRestMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Bean configuration for token feature.
- * Wires token feature ports to shared infrastructure adapters.
+ * Infrastructure bean configuration for token feature.
+ * Wires port adapters, mappers and handlers.
  */
 @Configuration
-public class TokenBeanConfig {
+public class TokenInfrastructureConfig {
 
     @Bean
     public TokenIntrospectionPort tokenIntrospectionPort(TokenProviderPort tokenProviderPort) {
@@ -38,13 +37,6 @@ public class TokenBeanConfig {
     @Bean
     public TokenBlacklistCheckPort tokenBlacklistCheckPort(TokenBlacklistPort tokenBlacklistPort) {
         return tokenBlacklistPort::isBlacklisted;
-    }
-
-    @Bean
-    public ValidateTokenUseCase validateTokenUseCase(
-            TokenIntrospectionPort tokenIntrospectionPort,
-            TokenBlacklistCheckPort tokenBlacklistCheckPort) {
-        return new ValidateTokenUseCaseImpl(tokenIntrospectionPort, tokenBlacklistCheckPort);
     }
 
     @Bean

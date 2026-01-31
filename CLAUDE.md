@@ -1,7 +1,7 @@
 # Microservicio de Seguridad - Spring Boot + Screaming Architecture + NoSQL
 
 ## Contexto
-Construye un microservicio de **Seguridad/Autenticación** usando Screaming Architecture. El servicio maneja exclusivamente autenticación contra Active Directory/LDAP y gestión de contraseñas. Usa MongoDB como base de datos NoSQL para persistencia y Redis para cache/blacklist.
+Construye un microservicio de **Seguridad/Autenticación** usando Screaming Architecture. El servicio maneja exclusivamente autenticación contra LDAP o Keycloak (configurable vía `auth.provider`) y gestión de contraseñas. Usa MongoDB como base de datos NoSQL para persistencia y Redis para cache/blacklist.
 
 ## Principios de Arquitectura
 
@@ -19,15 +19,15 @@ Construye un microservicio de **Seguridad/Autenticación** usando Screaming Arch
   - **port/output/**: Interfaces de puertos de salida (driven ports)
   - **usecase/**: Implementaciones de casos de uso (sin @Service, wired via @Bean)
 - **infrastructure/**: Todo lo que tiene dependencias externas, incluyendo:
-  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, clientes HTTP) - sin @Component, wired via @Bean
-  - **config/**: Configuración de beans del feature (wiring explícito con @Bean)
+  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, Keycloak, clientes HTTP) - sin @Component, wired via @Bean
+  - **config/**: Configuración de beans del feature, separada en DomainConfig (servicios de dominio y use cases) e InfrastructureConfig (adapters, mappers, handlers) — wiring explícito con @Bean
 
 ## Dominio de Negocio: Security Service
 
 ### Features y Funcionalidades
 
 #### 1. Authentication Feature
-- **Sign In**: Autenticación contra Active Directory/LDAP
+- **Sign In**: Autenticación contra LDAP o Keycloak (según `auth.provider`)
 - **Sign Out**: Invalidación de tokens (blacklist en Redis)
 - **Refresh Token**: Renovación de access token usando refresh token
 
@@ -54,7 +54,8 @@ Construye un microservicio de **Seguridad/Autenticación** usando Screaming Arch
 | Spring Security | - | Seguridad reactiva + JWT |
 | Spring Data MongoDB Reactive | - | Persistencia NoSQL |
 | Spring Data Redis Reactive | - | Cache, blacklist, rate limiting |
-| Spring LDAP | - | Conexión Active Directory/LDAP |
+| Spring LDAP | - | Conexión LDAP |
+| Spring WebClient | - | Comunicación HTTP con Keycloak |
 | Gradle Kotlin DSL | 8.x | Build tool |
 | jjwt | 0.12.x | Generación/validación JWT |
 | Resilience4j | 2.2.x | Retry, Circuit Breaker, Rate Limiter |
@@ -117,7 +118,8 @@ src/main/java/com/company/security/
 │       │   └── output/
 │       │       ├── directory/
 │       │       │   ├── LdapDirectoryAdapter.java
-│       │       │   ├── ActiveDirectoryAdapter.java
+│       │       │   ├── KeycloakDirectoryAdapter.java
+│       │       │   ├── KeycloakUserMapper.java
 │       │       │   └── DirectoryUserMapper.java
 │       │       ├── token/
 │       │       │   ├── JwtTokenProviderAdapter.java
@@ -130,7 +132,8 @@ src/main/java/com/company/security/
 │       │           └── document/
 │       │               └── AuthAuditDocument.java
 │       └── config/
-│           └── AuthenticationBeanConfig.java
+│           ├── AuthenticationDomainConfig.java
+│           └── AuthenticationInfrastructureConfig.java
 │
 ├── password/                                      # FEATURE: Password Management
 │   ├── domain/
@@ -200,7 +203,8 @@ src/main/java/com/company/security/
 │       │           └── dto/
 │       │               └── UserInfoClientResponse.java
 │       └── config/
-│           └── PasswordBeanConfig.java
+│           ├── PasswordDomainConfig.java
+│           └── PasswordInfrastructureConfig.java
 │
 ├── token/                                         # FEATURE: Token Validation (Internal)
 │   ├── domain/
@@ -237,7 +241,8 @@ src/main/java/com/company/security/
 │       │       └── mapper/
 │       │           └── TokenRestMapper.java
 │       └── config/
-│           └── TokenBeanConfig.java
+│           ├── TokenDomainConfig.java
+│           └── TokenInfrastructureConfig.java
 │
 ├── shared/                                        # SHARED: Cross-cutting concerns
 │   ├── domain/
@@ -282,9 +287,10 @@ src/main/java/com/company/security/
 │       │   └── dto/
 │       │       └── ErrorResponse.java
 │       └── properties/
+│           ├── AuthProviderProperties.java
 │           ├── JwtProperties.java
+│           ├── KeycloakProperties.java
 │           ├── LdapProperties.java
-│           ├── ActiveDirectoryProperties.java
 │           ├── SecurityProperties.java
 │           ├── PasswordPolicyProperties.java
 │           ├── ResilienceProperties.java
@@ -390,7 +396,8 @@ Incluir plugins y dependencias para:
 - Spring Security Reactive
 - Spring Data MongoDB Reactive
 - Spring Data Redis Reactive
-- Spring LDAP + UnboundID LDAP SDK
+- Spring LDAP + UnboundID LDAP SDK (proveedor LDAP)
+- OkHttp MockWebServer (testing Keycloak adapter)
 - Spring Kafka (para eventos)
 - JWT (jjwt 0.12.x)
 - Resilience4j Reactor
@@ -416,15 +423,16 @@ src/main/resources/
 - spring.data.mongodb (uri, auto-index-creation)
 - spring.data.redis (host, port, password, pool)
 - spring.kafka (bootstrap-servers, producer config)
+- auth.provider (ldap | keycloak) - selección del proveedor de autenticación
 - ldap (url, base, manager-dn, manager-password, user-search-base, user-search-filter)
-- ldap.active-directory (enabled, domain) - configurable para cuando se defina el proveedor
+- keycloak (server-url, realm, client-id, client-secret, connection-timeout, read-timeout, role-mapping)
 - security.jwt (secret, access-token-expiration, refresh-token-expiration, issuer)
 - security.password (reset-token-expiration, min-length, max-length, require-uppercase, require-lowercase, require-digit, require-special-char, max-failed-attempts, lock-duration)
 - security.cors (allowed-origins, allowed-methods, allowed-headers)
-- resilience4j.circuitbreaker.instances (directoryService, clientService)
-- resilience4j.retry.instances (directoryService, clientService)
+- resilience4j.circuitbreaker.instances (directoryService, clientService, keycloakService)
+- resilience4j.retry.instances (directoryService, clientService, keycloakService)
 - resilience4j.ratelimiter.instances (signIn, passwordRecovery, tokenValidation)
-- resilience4j.timelimiter.instances (directoryService)
+- resilience4j.timelimiter.instances (directoryService, keycloakService)
 - services.client-service (base-url, timeout)
 - management.endpoints (health, metrics, prometheus)
 - springdoc (api-docs path, swagger-ui)
@@ -506,17 +514,30 @@ Documentar todos los endpoints con:
 - CustomAuthenticationEntryPoint: Respuesta 401 estandarizada
 - CustomAccessDeniedHandler: Respuesta 403 estandarizada
 
-## LDAP/Active Directory Configuration
+## Directory / Identity Provider Configuration
 
-El proveedor de directorio aún no está definido, por lo tanto:
-- Crear DirectoryServicePort como interfaz agnóstica
-- Implementar LdapDirectoryAdapter genérico
-- Implementar ActiveDirectoryAdapter específico para AD
-- Configurar mediante properties cuál usar (ldap.active-directory.enabled)
-- Mapeo de atributos configurable (uid, mail, sAMAccountName, givenName, sn, memberOf)
-- Pool de conexiones con Spring LDAP
-- Circuit breaker y retry en todas las operaciones de directorio
-- Time limiter para operaciones de autenticación
+El proveedor de autenticación se selecciona mediante `auth.provider` (default: `keycloak`):
+
+### `auth.provider=ldap`
+- LdapDirectoryAdapter: autenticación vía Spring LDAP (bind + search)
+- DirectoryUserMapper: mapeo de atributos LDAP (uid, mail, givenName, sn, memberOf)
+- DirectoryPasswordAdapter: operaciones de contraseña contra LDAP
+- LdapContextSource + LdapTemplate se crean condicionalmente
+
+### `auth.provider=keycloak`
+- KeycloakDirectoryAdapter: autenticación vía ROPC grant (Resource Owner Password Credentials)
+  - POST token endpoint → decodifica access_token (Base64) → GET userinfo
+  - findByUsername vía Admin API con client_credentials grant
+  - isAvailable vía GET /realms/{realm}
+- KeycloakUserMapper: mapeo de claims (sub, preferred_username, email, realm_access, resource_access, groups)
+- Roles filtradas por prefijo APP_/ROLE_ (APP_ADMIN → ROLE_ADMIN)
+- Beans de LDAP (LdapContextSource, LdapTemplate, DirectoryPasswordAdapter) NO se crean
+- Operaciones de contraseña contra directorio no disponibles (limitación conocida)
+
+### Común a ambos proveedores
+- DirectoryServicePort como interfaz agnóstica (domain port)
+- Circuit breaker, retry y time limiter en todas las operaciones de directorio
+- El microservicio sigue generando sus propios JWT independientemente del proveedor
 
 ## Testing Strategy
 
@@ -528,7 +549,7 @@ El proveedor de directorio aún no está definido, por lo tanto:
 - adapter/input/rest/* → WebTestClient + StepVerifier
 - adapter/output/persistence/* → Testcontainers MongoDB
 - adapter/output/token/* → Testcontainers Redis
-- adapter/output/directory/* → UnboundID in-memory LDAP
+- adapter/output/directory/* → UnboundID in-memory LDAP, MockWebServer para Keycloak
 
 ### Architecture Tests (ArchUnit)
 - domain no depende de infrastructure
@@ -546,8 +567,8 @@ El proveedor de directorio aún no está definido, por lo tanto:
 3. Implementar puertos de entrada y salida como interfaces
 4. Implementar casos de uso con inyección de puertos
 5. Implementar adaptadores REST (handlers funcionales + routers)
-6. Implementar adaptadores de salida (MongoDB, Redis, LDAP, Kafka, HTTP client)
-7. Crear configuración de beans por feature
+6. Implementar adaptadores de salida (MongoDB, Redis, LDAP, Keycloak, Kafka, HTTP client)
+7. Crear configuración de beans por feature (DomainConfig + InfrastructureConfig separados)
 8. Crear configuración compartida (security, database, ldap, resilience)
 9. Crear archivos de properties por ambiente
 10. Crear logback-spring.xml

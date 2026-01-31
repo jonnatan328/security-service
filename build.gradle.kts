@@ -51,7 +51,6 @@ dependencies {
     // Spring LDAP
     implementation("org.springframework.boot:spring-boot-starter-data-ldap")
     implementation("org.springframework.ldap:spring-ldap-core:3.2.2")
-    implementation("org.springframework.security:spring-security-ldap")
     implementation("com.unboundid:unboundid-ldapsdk:7.0.0")
 
     // Spring Kafka
@@ -108,6 +107,9 @@ dependencies {
 
     // In-memory LDAP for testing
     testImplementation("com.unboundid:unboundid-ldapsdk:7.0.0")
+
+    // MockWebServer for HTTP-based adapter testing
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 
     // Test Lombok
     testCompileOnly("org.projectlombok:lombok")

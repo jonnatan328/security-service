@@ -6,9 +6,8 @@ import org.springframework.validation.annotation.Validated;
 
 @Data
 @Validated
-@ConfigurationProperties(prefix = "ldap.active-directory")
-public class ActiveDirectoryProperties {
+@ConfigurationProperties(prefix = "auth")
+public class AuthProviderProperties {
 
-    private boolean enabled = false;
-    private String domain;
+    private String provider = "ldap";
 }

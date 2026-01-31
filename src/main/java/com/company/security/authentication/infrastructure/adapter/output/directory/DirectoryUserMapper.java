@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Mapper for converting LDAP/AD directory context to AuthenticatedUser.
+ * Mapper for converting LDAP directory context to AuthenticatedUser.
  */
 public class DirectoryUserMapper {
 
@@ -19,14 +19,6 @@ public class DirectoryUserMapper {
     private static final String ATTR_GIVEN_NAME = "givenName";
     private static final String ATTR_SN = "sn";
     private static final String ATTR_MEMBER_OF = "memberOf";
-    private static final String ATTR_USER_ACCOUNT_CONTROL = "userAccountControl";
-
-    // Active Directory attribute names
-    private static final String ATTR_SAM_ACCOUNT_NAME = "sAMAccountName";
-    private static final String ATTR_USER_PRINCIPAL_NAME = "userPrincipalName";
-
-    // AD userAccountControl flags
-    private static final int AD_ACCOUNT_DISABLED = 0x0002;
 
     public AuthenticatedUser mapFromLdapContext(DirContextOperations ctx, String username) {
         String userId = getStringAttribute(ctx, ATTR_UID, username);
@@ -45,35 +37,6 @@ public class DirectoryUserMapper {
                 .groups(groups)
                 .roles(roles)
                 .enabled(true)
-                .build();
-    }
-
-    public AuthenticatedUser mapFromActiveDirectoryContext(DirContextOperations ctx) {
-        String username = getStringAttribute(ctx, ATTR_SAM_ACCOUNT_NAME, null);
-        if (username == null) {
-            username = getStringAttribute(ctx, ATTR_USER_PRINCIPAL_NAME, "");
-            if (username.contains("@")) {
-                username = username.substring(0, username.indexOf('@'));
-            }
-        }
-
-        String userId = getStringAttribute(ctx, ATTR_UID, username);
-        String email = getStringAttribute(ctx, ATTR_MAIL, null);
-        String firstName = getStringAttribute(ctx, ATTR_GIVEN_NAME, null);
-        String lastName = getStringAttribute(ctx, ATTR_SN, null);
-        Set<String> groups = getGroups(ctx);
-        Set<String> roles = extractRolesFromGroups(groups);
-        boolean enabled = isAccountEnabled(ctx);
-
-        return AuthenticatedUser.builder()
-                .userId(userId)
-                .username(username)
-                .email(email != null ? email : username + "@unknown.local")
-                .firstName(firstName)
-                .lastName(lastName)
-                .groups(groups)
-                .roles(roles)
-                .enabled(enabled)
                 .build();
     }
 
@@ -116,18 +79,5 @@ public class DirectoryUserMapper {
                     return group;
                 })
                 .collect(Collectors.toSet());
-    }
-
-    private boolean isAccountEnabled(DirContextOperations ctx) {
-        String uac = ctx.getStringAttribute(ATTR_USER_ACCOUNT_CONTROL);
-        if (uac == null) {
-            return true;
-        }
-        try {
-            int flags = Integer.parseInt(uac);
-            return (flags & AD_ACCOUNT_DISABLED) == 0;
-        } catch (NumberFormatException e) {
-            return true;
-        }
     }
 }

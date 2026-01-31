@@ -19,10 +19,6 @@ ldap:
   manager-password: admin
   user-search-base: ou=users
   user-dn-attribute: uid
-  active-directory:
-    enabled: false
-    domain: test.com
-
 security:
   jwt:
     secret: TestSecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLongForHMACSHA256!
