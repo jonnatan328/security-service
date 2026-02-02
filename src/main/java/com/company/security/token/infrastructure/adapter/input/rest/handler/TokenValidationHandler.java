@@ -1,13 +1,15 @@
 package com.company.security.token.infrastructure.adapter.input.rest.handler;
 
-import com.company.security.token.infrastructure.adapter.input.rest.dto.request.ValidateTokenRequest;
-import com.company.security.token.infrastructure.adapter.input.rest.mapper.TokenRestMapper;
 import com.company.security.token.domain.port.input.ValidateTokenUseCase;
-import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.reactive.function.server.ServerResponse;
+import com.company.security.token.infrastructure.adapter.input.rest.dto.request.ValidateTokenRequest;
+import com.company.security.token.infrastructure.adapter.input.rest.dto.response.TokenValidationResponse;
+import com.company.security.token.infrastructure.adapter.input.rest.mapper.TokenRestMapper;
 import reactor.core.publisher.Mono;
 
+/**
+ * Handler for token validation REST endpoints.
+ * Orchestrates use case calls and response mapping.
+ */
 public class TokenValidationHandler {
 
     private final ValidateTokenUseCase validateTokenUseCase;
@@ -18,12 +20,8 @@ public class TokenValidationHandler {
         this.mapper = mapper;
     }
 
-    public Mono<ServerResponse> validate(ServerRequest request) {
-        return request.bodyToMono(ValidateTokenRequest.class)
-                .flatMap(req -> validateTokenUseCase.validate(req.token()))
-                .map(mapper::toResponse)
-                .flatMap(response -> ServerResponse.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(response));
+    public Mono<TokenValidationResponse> validate(ValidateTokenRequest request) {
+        return validateTokenUseCase.validate(request.token())
+                .map(mapper::toResponse);
     }
 }

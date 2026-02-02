@@ -170,10 +170,12 @@ class ArchitectureTest {
     class AnnotationRules {
 
         @Test
-        @DisplayName("Adapters should not have @Component annotation")
+        @DisplayName("Adapters should not have @Component annotation (except @RestController and @RestControllerAdvice)")
         void adaptersShouldNotHaveComponent() {
             noClasses()
                     .that().resideInAPackage("..adapter..")
+                    .and().areNotAnnotatedWith(org.springframework.web.bind.annotation.RestController.class)
+                    .and().areNotAnnotatedWith(org.springframework.web.bind.annotation.RestControllerAdvice.class)
                     .should().beAnnotatedWith(org.springframework.stereotype.Component.class)
                     .because("Adapters should be wired via @Bean configuration, not @Component")
                     .check(importedClasses);

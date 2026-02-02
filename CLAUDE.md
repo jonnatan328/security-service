@@ -19,7 +19,7 @@ Construye un microservicio de **Seguridad/Autenticación** usando Screaming Arch
   - **port/output/**: Interfaces de puertos de salida (driven ports)
   - **usecase/**: Implementaciones de casos de uso (sin @Service, wired via @Bean)
 - **infrastructure/**: Todo lo que tiene dependencias externas, incluyendo:
-  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, Keycloak, clientes HTTP) - sin @Component, wired via @Bean
+  - **adapter/**: Implementaciones de entrada (REST) y salida (DB, Redis, LDAP, Keycloak, clientes HTTP) - controllers usan @RestController, handlers y demás adapters wired via @Bean
   - **config/**: Configuración de beans del feature, separada en DomainConfig (servicios de dominio y use cases) e InfrastructureConfig (adapters, mappers, handlers) — wiring explícito con @Bean
 
 ## Dominio de Negocio: Security Service
@@ -101,10 +101,10 @@ src/main/java/com/company/security/
 │   └── infrastructure/
 │       ├── adapter/
 │       │   ├── input/rest/
+│       │   │   ├── controller/
+│       │   │   │   └── AuthenticationController.java
 │       │   │   ├── handler/
 │       │   │   │   └── AuthenticationHandler.java
-│       │   │   ├── router/
-│       │   │   │   └── AuthenticationRouter.java
 │       │   │   ├── dto/
 │       │   │   │   ├── request/
 │       │   │   │   │   ├── SignInRequest.java
@@ -171,10 +171,10 @@ src/main/java/com/company/security/
 │   └── infrastructure/
 │       ├── adapter/
 │       │   ├── input/rest/
+│       │   │   ├── controller/
+│       │   │   │   └── PasswordController.java
 │       │   │   ├── handler/
 │       │   │   │   └── PasswordHandler.java
-│       │   │   ├── router/
-│       │   │   │   └── PasswordRouter.java
 │       │   │   ├── dto/
 │       │   │   │   ├── request/
 │       │   │   │   │   ├── RecoverPasswordRequest.java
@@ -229,10 +229,10 @@ src/main/java/com/company/security/
 │   └── infrastructure/
 │       ├── adapter/
 │       │   └── input/rest/
+│       │       ├── controller/
+│       │       │   └── TokenValidationController.java
 │       │       ├── handler/
 │       │       │   └── TokenValidationHandler.java
-│       │       ├── router/
-│       │       │   └── InternalTokenRouter.java
 │       │       ├── dto/
 │       │       │   ├── request/
 │       │       │   │   └── ValidateTokenRequest.java
@@ -283,7 +283,7 @@ src/main/java/com/company/security/
 │       │   ├── CorrelationIdFilter.java
 │       │   └── RequestLoggingFilter.java
 │       ├── exception/
-│       │   ├── GlobalExceptionHandler.java
+│       │   ├── RestExceptionHandler.java
 │       │   └── dto/
 │       │       └── ErrorResponse.java
 │       └── properties/
@@ -557,7 +557,7 @@ El proveedor de autenticación se selecciona mediante `auth.provider` (default: 
 - domain.port.input no depende de adapters
 - domain.port.output no depende de adapters
 - Cada feature solo depende de shared y su propio código
-- Adapters no tienen @Component (wired via @Bean en config)
+- Adapters no tienen @Component excepto @RestController y @RestControllerAdvice (handlers y demás adapters wired via @Bean en config)
 - Use cases no tienen @Service (wired via @Bean en config)
 
 ## Instrucciones de Generación
@@ -566,7 +566,7 @@ El proveedor de autenticación se selecciona mediante `auth.provider` (default: 
 2. Implementar dominios de cada feature (models como Value Objects inmutables, excepciones específicas, servicios de dominio puros)
 3. Implementar puertos de entrada y salida como interfaces
 4. Implementar casos de uso con inyección de puertos
-5. Implementar adaptadores REST (handlers funcionales + routers)
+5. Implementar adaptadores REST (@RestController + @Valid)
 6. Implementar adaptadores de salida (MongoDB, Redis, LDAP, Keycloak, Kafka, HTTP client)
 7. Crear configuración de beans por feature (DomainConfig + InfrastructureConfig separados)
 8. Crear configuración compartida (security, database, ldap, resilience)

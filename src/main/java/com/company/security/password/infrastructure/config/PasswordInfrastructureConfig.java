@@ -15,7 +15,7 @@ import com.company.security.password.infrastructure.adapter.output.persistence.r
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import com.company.security.shared.infrastructure.properties.ServicesProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Validator;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -70,13 +70,13 @@ public class PasswordInfrastructureConfig {
     }
 
     @Bean
+    @ConditionalOnBean({ResetPasswordUseCase.class, UpdatePasswordUseCase.class})
     public PasswordHandler passwordHandler(
             RecoverPasswordUseCase recoverPasswordUseCase,
             ResetPasswordUseCase resetPasswordUseCase,
             UpdatePasswordUseCase updatePasswordUseCase,
-            PasswordRestMapper passwordRestMapper,
-            Validator validator) {
+            PasswordRestMapper passwordRestMapper) {
         return new PasswordHandler(recoverPasswordUseCase, resetPasswordUseCase,
-                updatePasswordUseCase, passwordRestMapper, validator);
+                updatePasswordUseCase, passwordRestMapper);
     }
 }

@@ -18,7 +18,6 @@ import com.company.security.shared.infrastructure.properties.JwtProperties;
 import com.company.security.shared.infrastructure.properties.KeycloakProperties;
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Validator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -97,9 +96,8 @@ public class AuthenticationInfrastructureConfig {
             SignInUseCase signInUseCase,
             SignOutUseCase signOutUseCase,
             RefreshTokenUseCase refreshTokenUseCase,
-            AuthenticationRestMapper authenticationRestMapper,
-            Validator validator) {
+            AuthenticationRestMapper authenticationRestMapper) {
         return new AuthenticationHandler(signInUseCase, signOutUseCase, refreshTokenUseCase,
-                authenticationRestMapper, validator);
+                authenticationRestMapper);
     }
 }
