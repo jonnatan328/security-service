@@ -33,6 +33,7 @@ public class AuthenticationController {
 
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";
+    private static final String X_DEVICE_ID = "X-Device-Id";
 
     private final AuthenticationHandler handler;
 
@@ -60,11 +61,12 @@ public class AuthenticationController {
     )
     public Mono<ResponseEntity<AuthenticationResponse>> signIn(
             @Valid @RequestBody SignInRequest request,
+            @RequestHeader(value = X_DEVICE_ID, required = false) String deviceId,
             ServerHttpRequest httpRequest) {
         String ipAddress = extractIpAddress(httpRequest);
         String userAgent = httpRequest.getHeaders().getFirst(HttpHeaders.USER_AGENT);
 
-        return handler.signIn(request, ipAddress, userAgent)
+        return handler.signIn(request, deviceId, ipAddress, userAgent)
                 .map(ResponseEntity::ok);
     }
 

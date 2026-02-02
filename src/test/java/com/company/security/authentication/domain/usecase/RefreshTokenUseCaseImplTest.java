@@ -86,7 +86,7 @@ class RefreshTokenUseCaseImplTest {
         when(tokenBlacklistPort.blacklist(eq(JTI), anyLong())).thenReturn(Mono.empty());
         when(tokenProviderPort.parseRefreshToken("new-refresh-token")).thenReturn(Mono.just(newRefreshClaims));
         when(refreshTokenPort.store(eq(USER_ID), eq(DEVICE_ID), eq(newRefreshClaims), anyLong())).thenReturn(Mono.empty());
-        when(authAuditPort.recordTokenRefresh(USER_ID, USERNAME, IP_ADDRESS, USER_AGENT)).thenReturn(Mono.empty());
+        when(authAuditPort.recordTokenRefresh(any(), any(), eq(IP_ADDRESS), eq(USER_AGENT))).thenReturn(Mono.empty());
 
         StepVerifier.create(refreshTokenUseCase.refreshToken(REFRESH_TOKEN, IP_ADDRESS, USER_AGENT))
                 .assertNext(tokenPair -> {

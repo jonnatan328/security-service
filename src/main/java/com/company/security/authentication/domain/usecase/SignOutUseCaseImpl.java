@@ -39,29 +39,31 @@ public class SignOutUseCaseImpl implements SignOutUseCase {
 
         return tokenProviderPort.parseAccessToken(accessToken)
                 .flatMap(claims -> {
-                    // Blacklist the access token
                     Mono<Void> blacklistAccess = tokenBlacklistPort.blacklist(
                             claims.jti(),
                             claims.remainingTimeInSeconds());
 
-                    // Delete the refresh token if provided
                     Mono<Void> deleteRefresh = refreshToken != null && !refreshToken.isBlank()
                             ? refreshTokenPort.delete(claims.userId(), claims.deviceId())
                             : Mono.empty();
 
-                    // Record the sign-out event
-                    Mono<Void> recordAudit = authAuditPort.recordSignOut(
-                            claims.userId(),
-                            claims.username(),
-                            ipAddress,
-                            userAgent);
-
-                    return Mono.when(blacklistAccess, deleteRefresh, recordAudit)
-                            .doOnSuccess(v -> log.info("Sign-out successful for user: {}", claims.username()));
+                    return Mono.when(blacklistAccess, deleteRefresh)
+                            .doOnSuccess(v -> {
+                                log.info("Sign-out successful for user: {}", claims.username());
+                                recordAudit(claims.userId(), claims.username(), ipAddress, userAgent);
+                            });
                 })
                 .onErrorResume(e -> {
                     log.error("Sign-out failed: {}", e.getMessage());
                     return Mono.error(e);
                 });
+    }
+
+    private void recordAudit(String userId, String username, String ipAddress, String userAgent) {
+        authAuditPort.recordSignOut(userId, username, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record sign-out audit for user: {}", username, error)
+                );
     }
 }

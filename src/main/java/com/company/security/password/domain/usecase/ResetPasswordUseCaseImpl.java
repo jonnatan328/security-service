@@ -56,17 +56,11 @@ public class ResetPasswordUseCaseImpl implements ResetPasswordUseCase {
                     // Change password in directory service
                     return directoryPasswordPort.resetPassword(resetToken.userId(), newPassword)
                             .then(passwordResetTokenPort.markAsUsed(token))
-                            .then(passwordAuditPort.recordEvent(
-                                    PasswordAuditPort.EventType.PASSWORD_RESET_COMPLETED,
-                                    resetToken.userId(),
-                                    resetToken.email().value(),
-                                    true,
-                                    null,
-                                    ipAddress,
-                                    userAgent))
                             .thenReturn(PasswordChangeResult.success(
                                     resetToken.userId(),
-                                    PasswordChangeResult.ChangeType.RESET));
+                                    PasswordChangeResult.ChangeType.RESET))
+                            .doOnNext(result -> recordAuditSuccess(
+                                    resetToken.userId(), resetToken.email().value(), ipAddress, userAgent));
                 })
                 .onErrorResume(e -> {
                     log.error("Password reset failed: {}", e.getMessage());
@@ -74,15 +68,28 @@ public class ResetPasswordUseCaseImpl implements ResetPasswordUseCase {
                         e instanceof PasswordResetTokenExpiredException) {
                         return Mono.error(e);
                     }
-                    return passwordAuditPort.recordEvent(
-                                    PasswordAuditPort.EventType.PASSWORD_RESET_FAILED,
-                                    null,
-                                    null,
-                                    false,
-                                    e.getMessage(),
-                                    ipAddress,
-                                    userAgent)
-                            .then(Mono.error(e));
+                    recordAuditFailure(e.getMessage(), ipAddress, userAgent);
+                    return Mono.error(e);
                 });
+    }
+
+    private void recordAuditSuccess(String userId, String email, String ipAddress, String userAgent) {
+        passwordAuditPort.recordEvent(
+                        PasswordAuditPort.EventType.PASSWORD_RESET_COMPLETED,
+                        userId, email, true, null, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record password reset success audit", error)
+                );
+    }
+
+    private void recordAuditFailure(String failureReason, String ipAddress, String userAgent) {
+        passwordAuditPort.recordEvent(
+                        PasswordAuditPort.EventType.PASSWORD_RESET_FAILED,
+                        null, null, false, failureReason, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record password reset failure audit", error)
+                );
     }
 }

@@ -45,20 +45,12 @@ public class UpdatePasswordUseCaseImpl implements UpdatePasswordUseCase {
                     passwordPolicyService.validatePassword(newPassword);
 
                     return directoryPasswordPort.changePassword(userId, newPassword)
-                            .then(passwordAuditPort.recordEvent(
-                                    PasswordAuditPort.EventType.PASSWORD_UPDATED,
-                                    userId,
-                                    null,
-                                    true,
-                                    null,
-                                    ipAddress,
-                                    userAgent))
                             .thenReturn(PasswordChangeResult.success(
                                     userId,
-                                    PasswordChangeResult.ChangeType.UPDATE));
+                                    PasswordChangeResult.ChangeType.UPDATE))
+                            .doOnNext(result -> recordAudit(userId, ipAddress, userAgent));
                 })
                 .doOnSuccess(result -> log.info("Password updated for user: {}", userId))
-                .onErrorResume(CurrentPasswordMismatchException.class, Mono::error)
                 .onErrorResume(e -> {
                     if (e instanceof CurrentPasswordMismatchException) {
                         return Mono.error(e);
@@ -66,5 +58,15 @@ public class UpdatePasswordUseCaseImpl implements UpdatePasswordUseCase {
                     log.error("Password update failed for user: {}", userId, e);
                     return Mono.error(e);
                 });
+    }
+
+    private void recordAudit(String userId, String ipAddress, String userAgent) {
+        passwordAuditPort.recordEvent(
+                        PasswordAuditPort.EventType.PASSWORD_UPDATED,
+                        userId, null, true, null, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record password update audit for user: {}", userId, error)
+                );
     }
 }

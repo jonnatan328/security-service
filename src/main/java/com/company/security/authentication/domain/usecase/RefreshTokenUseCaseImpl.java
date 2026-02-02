@@ -51,12 +51,10 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
 
         return tokenProviderPort.parseRefreshToken(refreshToken)
                 .flatMap(claims -> {
-                    // Validate refresh request
                     if (!authenticationDomainService.isValidRefreshRequest(claims.userId(), claims.deviceId())) {
                         return Mono.error(new InvalidTokenException("Invalid refresh token claims"));
                     }
 
-                    // Check if the refresh token is blacklisted
                     return tokenBlacklistPort.isBlacklisted(claims.jti())
                             .flatMap(isBlacklisted -> {
                                 if (isBlacklisted) {
@@ -64,7 +62,6 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
                                     return Mono.error(new InvalidTokenException("Refresh token has been revoked"));
                                 }
 
-                                // Verify the stored refresh token matches
                                 return refreshTokenPort.retrieve(claims.userId(), claims.deviceId())
                                         .switchIfEmpty(Mono.error(new InvalidTokenException("Refresh token not found")))
                                         .flatMap(storedClaims -> {
@@ -73,20 +70,14 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
                                                 return Mono.error(new InvalidTokenException("Invalid refresh token"));
                                             }
 
-                                            // Lookup user to get current roles/permissions
                                             return directoryServicePort.findByUsername(claims.username())
                                                     .switchIfEmpty(Mono.error(new InvalidCredentialsException(claims.username())))
-                                                    .flatMap(user -> generateNewTokens(user, claims.deviceId(), claims.jti()))
-                                                    .flatMap(newTokenPair -> authAuditPort.recordTokenRefresh(
-                                                                    claims.userId(),
-                                                                    claims.username(),
-                                                                    ipAddress,
-                                                                    userAgent)
-                                                            .thenReturn(newTokenPair));
+                                                    .flatMap(user -> generateNewTokens(user, claims.deviceId(), claims.jti()));
                                         });
                             });
                 })
-                .doOnSuccess(tokenPair -> log.info("Token refresh successful"))
+                .doOnNext(tokenPair -> log.info("Token refresh successful"))
+                .doOnNext(tokenPair -> recordAudit(ipAddress, userAgent))
                 .onErrorResume(e -> {
                     log.error("Token refresh failed: {}", e.getMessage());
                     return Mono.error(e);
@@ -96,10 +87,8 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
     private Mono<TokenPair> generateNewTokens(AuthenticatedUser user, String deviceId, String oldRefreshJti) {
         return tokenProviderPort.generateTokenPair(user, deviceId)
                 .flatMap(newTokenPair -> {
-                    // Blacklist the old refresh token
                     Mono<Void> blacklistOld = tokenBlacklistPort.blacklist(oldRefreshJti, 60);
 
-                    // Store the new refresh token
                     Mono<Void> storeNew = tokenProviderPort.parseRefreshToken(newTokenPair.refreshToken())
                             .flatMap(newClaims -> refreshTokenPort.store(
                                     user.userId(),
@@ -110,5 +99,14 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
                     return Mono.when(blacklistOld, storeNew)
                             .thenReturn(newTokenPair);
                 });
+    }
+
+    private void recordAudit(String ipAddress, String userAgent) {
+        // Token claims already validated at this point; audit is fire-and-forget
+        authAuditPort.recordTokenRefresh(null, null, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record token refresh audit", error)
+                );
     }
 }

@@ -11,6 +11,7 @@ import com.company.security.password.domain.usecase.RecoverPasswordUseCaseImpl;
 import com.company.security.password.domain.usecase.ResetPasswordUseCaseImpl;
 import com.company.security.password.domain.usecase.UpdatePasswordUseCaseImpl;
 import com.company.security.shared.infrastructure.properties.PasswordPolicyProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -53,6 +54,7 @@ public class PasswordDomainConfig {
     }
 
     @Bean
+    @ConditionalOnExpression("'${auth.provider:ldap}' != 'keycloak'")
     public ResetPasswordUseCase resetPasswordUseCase(
             PasswordResetTokenPort passwordResetTokenPort,
             DirectoryPasswordPort directoryPasswordPort,
@@ -63,6 +65,7 @@ public class PasswordDomainConfig {
     }
 
     @Bean
+    @ConditionalOnExpression("'${auth.provider:ldap}' != 'keycloak'")
     public UpdatePasswordUseCase updatePasswordUseCase(
             DirectoryPasswordPort directoryPasswordPort,
             PasswordAuditPort passwordAuditPort,

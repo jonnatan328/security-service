@@ -32,8 +32,9 @@ public class AuthenticationHandler {
         this.mapper = mapper;
     }
 
-    public Mono<AuthenticationResponse> signIn(SignInRequest request, String ipAddress, String userAgent) {
-        return signInUseCase.signIn(mapper.toCredentials(request), ipAddress, userAgent)
+    public Mono<AuthenticationResponse> signIn(SignInRequest request, String deviceId,
+                                                  String ipAddress, String userAgent) {
+        return signInUseCase.signIn(mapper.toCredentials(request, deviceId), ipAddress, userAgent)
                 .map(mapper::toAuthenticationResponse);
     }
 

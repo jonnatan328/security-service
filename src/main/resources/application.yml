@@ -1,13 +1,15 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8180}
 
 spring:
+  webflux:
+    base-path: ${CONTEXT_PATH:/security-service}
   application:
     name: security-service
 
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/security_db}
+      uri: ${MONGODB_URI:mongodb+srv://jrios328_db_user:DUpP3W7KgRoiRPI0@cluster0.hd8tkc8.mongodb.net/personal_finances}
       auto-index-creation: true
 
     redis:
@@ -41,10 +43,10 @@ auth:
 
 # Keycloak Configuration
 keycloak:
-  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8180}
-  realm: ${KEYCLOAK_REALM:company-realm}
+  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8080}
+  realm: ${KEYCLOAK_REALM:PersonalFinancesPortal}
   client-id: ${KEYCLOAK_CLIENT_ID:security-service}
-  client-secret: ${KEYCLOAK_CLIENT_SECRET:}
+  client-secret: ${KEYCLOAK_CLIENT_SECRET:POdQ79dIXgLTul341wcWOIYDPzIvXya2}
   connection-timeout: ${KEYCLOAK_CONNECTION_TIMEOUT:5000}
   read-timeout: ${KEYCLOAK_READ_TIMEOUT:5000}
   role-mapping:

@@ -13,9 +13,6 @@ public record SignInRequest(
 
         @NotBlank(message = "Password is required")
         @Size(min = 1, max = 256, message = "Password must be between 1 and 256 characters")
-        String password,
-
-        @Size(max = 100, message = "Device ID must not exceed 100 characters")
-        String deviceId
+        String password
 ) {
 }

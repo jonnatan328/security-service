@@ -48,56 +48,38 @@ public class SignInUseCaseImpl implements SignInUseCase {
         return directoryServicePort.authenticate(credentials)
                 .doOnNext(user -> authenticationDomainService.validateUserCanSignIn(user, credentials))
                 .flatMap(user -> tokenProviderPort.generateTokenPair(user, credentials.deviceId())
-                        .flatMap(tokenPair -> {
-                            // Parse the refresh token to get claims for storage
-                            return tokenProviderPort.parseRefreshToken(tokenPair.refreshToken())
-                                    .flatMap(claims -> {
-                                        long expirationSeconds = claims.remainingTimeInSeconds();
-                                        return refreshTokenPort.store(
-                                                        user.userId(),
-                                                        credentials.deviceId(),
-                                                        claims,
-                                                        expirationSeconds)
-                                                .then(Mono.just(tokenPair));
-                                    });
-                        })
+                        .flatMap(tokenPair ->
+                                tokenProviderPort.parseRefreshToken(tokenPair.refreshToken())
+                                        .flatMap(claims -> {
+                                            long expirationSeconds = claims.remainingTimeInSeconds();
+                                            return refreshTokenPort.store(
+                                                            user.userId(),
+                                                            credentials.deviceId(),
+                                                            claims,
+                                                            expirationSeconds)
+                                                    .then(Mono.just(tokenPair));
+                                        }))
                         .map(tokenPair -> AuthenticationResult.of(user, tokenPair))
-                        .flatMap(result -> authAuditPort.recordSignInSuccess(
-                                        user.userId(),
-                                        user.username(),
-                                        ipAddress,
-                                        userAgent)
-                                .thenReturn(result)))
+                        .doOnNext(result -> recordAuditSuccess(
+                                user.userId(), user.username(), ipAddress, userAgent)))
                 .doOnSuccess(result -> log.info("Sign-in successful for user: {}", credentials.username()))
-                .onErrorResume(InvalidCredentialsException.class, e -> {
-                    log.warn("Sign-in failed for user: {} - Invalid credentials", credentials.username());
-                    return authAuditPort.recordSignInFailure(
-                                    credentials.username(),
-                                    ipAddress,
-                                    userAgent,
-                                    "Invalid credentials")
-                            .then(Mono.error(e));
-                })
-                .onErrorResume(AccountLockedException.class, e -> {
-                    log.warn("Sign-in failed for user: {} - Account locked", credentials.username());
-                    return authAuditPort.recordSignInFailure(
-                                    credentials.username(),
-                                    ipAddress,
-                                    userAgent,
-                                    "Account locked")
-                            .then(Mono.error(e));
-                })
-                .onErrorResume(e -> {
-                    if (!(e instanceof InvalidCredentialsException) && !(e instanceof AccountLockedException)) {
-                        log.error("Sign-in failed for user: {} - {}", credentials.username(), e.getMessage());
-                        return authAuditPort.recordSignInFailure(
-                                        credentials.username(),
-                                        ipAddress,
-                                        userAgent,
-                                        e.getMessage())
-                                .then(Mono.error(e));
-                    }
-                    return Mono.error(e);
-                });
+                .doOnError(e -> recordAuditFailure(credentials.username(), ipAddress, userAgent, e));
+    }
+
+    private void recordAuditSuccess(String userId, String username, String ipAddress, String userAgent) {
+        authAuditPort.recordSignInSuccess(userId, username, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record sign-in success audit for user: {}", username, error)
+                );
+    }
+
+    private void recordAuditFailure(String username, String ipAddress, String userAgent, Throwable cause) {
+        log.warn("Sign-in failed for user: {} - {}", username, cause.getMessage());
+        authAuditPort.recordSignInFailure(username, ipAddress, userAgent, cause.getMessage())
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record sign-in failure audit for user: {}", username, error)
+                );
     }
 }

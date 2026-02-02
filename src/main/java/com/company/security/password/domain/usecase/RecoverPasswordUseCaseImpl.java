@@ -59,14 +59,8 @@ public class RecoverPasswordUseCaseImpl implements RecoverPasswordUseCase {
                                             String resetUrl = buildResetUrl(saved.token());
                                             return eventPublisherPort.publishPasswordResetRequested(saved, resetUrl);
                                         })
-                                        .then(passwordAuditPort.recordEvent(
-                                                PasswordAuditPort.EventType.PASSWORD_RESET_REQUESTED,
-                                                userInfo.userId(),
-                                                email,
-                                                true,
-                                                null,
-                                                ipAddress,
-                                                userAgent));
+                                        .doOnSuccess(v -> recordAudit(
+                                                userInfo.userId(), email, ipAddress, userAgent));
                             }));
                 })
                 .onErrorResume(e -> {
@@ -75,6 +69,16 @@ public class RecoverPasswordUseCaseImpl implements RecoverPasswordUseCase {
                 })
                 .then()
                 .doOnSuccess(v -> log.info("Password recovery processed for email: {}", email));
+    }
+
+    private void recordAudit(String userId, String email, String ipAddress, String userAgent) {
+        passwordAuditPort.recordEvent(
+                        PasswordAuditPort.EventType.PASSWORD_RESET_REQUESTED,
+                        userId, email, true, null, ipAddress, userAgent)
+                .subscribe(
+                        null,
+                        error -> log.warn("Failed to record password recovery audit for email: {}", email, error)
+                );
     }
 
     private String buildResetUrl(String token) {

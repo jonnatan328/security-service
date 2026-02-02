@@ -12,8 +12,8 @@ import com.company.security.authentication.infrastructure.adapter.input.rest.dto
  */
 public class AuthenticationRestMapper {
 
-    public Credentials toCredentials(SignInRequest request) {
-        return Credentials.of(request.username(), request.password(), request.deviceId());
+    public Credentials toCredentials(SignInRequest request, String deviceId) {
+        return Credentials.of(request.username(), request.password(), deviceId);
     }
 
     public AuthenticationResponse toAuthenticationResponse(AuthenticationResult result) {
