@@ -25,10 +25,15 @@ public class CustomAuthenticationEntryPoint implements ServerAuthenticationEntry
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         response.getHeaders().setContentType(MediaType.APPLICATION_PROBLEM_JSON);
 
+        AuthenticationException authError = exchange.getAttribute("AUTH_EXCEPTION");
+        String detail = authError != null
+                ? authError.getMessage()
+                : (ex.getMessage() != null ? ex.getMessage() : "Authentication is required to access this resource");
+
         ErrorResponse errorResponse = ErrorResponse.of(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
-                ex.getMessage() != null ? ex.getMessage() : "Authentication is required to access this resource",
+                detail,
                 exchange.getRequest().getPath().value(),
                 "AUTH-105"
         );

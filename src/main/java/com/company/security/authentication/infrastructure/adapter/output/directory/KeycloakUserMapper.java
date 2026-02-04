@@ -23,7 +23,6 @@ public class KeycloakUserMapper {
         this.keycloakProperties = keycloakProperties;
     }
 
-    @SuppressWarnings("unchecked")
     public AuthenticatedUser map(Map<String, Object> tokenClaims, Map<String, Object> userInfoClaims) {
         String userId = getClaimWithFallback(userInfoClaims, tokenClaims, "sub");
         String username = getClaimWithFallback(userInfoClaims, tokenClaims, "preferred_username");

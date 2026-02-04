@@ -9,13 +9,7 @@ import java.util.Set;
  * Principal implementation that wraps full TokenClaims from the JWT.
  * getName() returns the userId (not username) to align with domain expectations.
  */
-public class JwtAuthenticatedPrincipal implements Principal {
-
-    private final TokenClaims tokenClaims;
-
-    public JwtAuthenticatedPrincipal(TokenClaims tokenClaims) {
-        this.tokenClaims = tokenClaims;
-    }
+public record JwtAuthenticatedPrincipal(TokenClaims tokenClaims) implements Principal {
 
     @Override
     public String getName() {
@@ -40,9 +34,5 @@ public class JwtAuthenticatedPrincipal implements Principal {
 
     public Set<String> getRoles() {
         return tokenClaims.roles();
-    }
-
-    public TokenClaims getTokenClaims() {
-        return tokenClaims;
     }
 }

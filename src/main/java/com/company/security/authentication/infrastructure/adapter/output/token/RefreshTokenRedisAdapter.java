@@ -77,7 +77,7 @@ public class RefreshTokenRedisAdapter implements RefreshTokenPort {
         String pattern = KEY_PREFIX + userId + ":*";
 
         return redisTemplate.scan(ScanOptions.scanOptions().match(pattern).build())
-                .flatMap(key -> redisTemplate.delete(key))
+                .flatMap(redisTemplate::delete)
                 .then()
                 .doOnSuccess(v -> log.debug("All refresh tokens deleted for user: {}", userId))
                 .doOnError(e -> log.error("Failed to delete all refresh tokens for user: {}", userId, e));

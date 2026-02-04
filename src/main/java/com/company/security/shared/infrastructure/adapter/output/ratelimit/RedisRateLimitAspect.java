@@ -18,7 +18,7 @@ public class RedisRateLimitAspect {
     }
 
     @Around("@annotation(redisRateLimited)")
-    public Object around(ProceedingJoinPoint joinPoint, RedisRateLimited redisRateLimited) throws Throwable {
+    public Object around(ProceedingJoinPoint joinPoint, RedisRateLimited redisRateLimited) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String[] parameterNames = signature.getParameterNames();
         Object[] args = joinPoint.getArgs();

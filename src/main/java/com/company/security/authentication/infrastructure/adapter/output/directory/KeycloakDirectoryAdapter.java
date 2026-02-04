@@ -115,7 +115,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                 .onStatus(HttpStatusCode::is4xxClientError, response ->
                         response.bodyToMono(String.class)
                                 .flatMap(body -> handleTokenErrorResponse(body, username)))
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<>() {});
     }
 
     private Mono<Map<String, Object>> requestClientCredentialsToken() {
@@ -133,7 +133,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                         response.bodyToMono(String.class)
                                 .flatMap(body -> Mono.error(new DirectoryServiceException(
                                         "Failed to obtain client credentials token: " + body))))
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<>() {});
     }
 
     private Mono<Map<String, Object>> fetchUserInfo(String accessToken) {
@@ -148,10 +148,9 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                         response.bodyToMono(String.class)
                                 .flatMap(body -> Mono.error(new DirectoryServiceException(
                                         "Failed to fetch userinfo from Keycloak"))))
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<>() {});
     }
 
-    @SuppressWarnings("unchecked")
     private Mono<Map<String, Object>> fetchUserByUsername(String accessToken, String username) {
         String usersUri = String.format("/admin/realms/%s/users", keycloakProperties.getRealm());
 
@@ -170,10 +169,9 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                 .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {})
                 .filter(users -> users != null && !users.isEmpty())
                 .switchIfEmpty(Mono.error(new DirectoryServiceException("User not found in Keycloak: " + username)))
-                .map(users -> users.get(0));
+                .map(List::getFirst);
     }
 
-    @SuppressWarnings("unchecked")
     private Mono<List<Map<String, Object>>> fetchUserRealmRoles(String accessToken, String userId) {
         String rolesUri = String.format("/admin/realms/%s/users/%s/role-mappings/realm",
                 keycloakProperties.getRealm(), userId);
@@ -189,7 +187,6 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                 .onErrorReturn(Collections.emptyList());
     }
 
-    @SuppressWarnings("unchecked")
     private AuthenticatedUser mapAdminUserToAuthenticatedUser(
             Map<String, Object> userData, List<Map<String, Object>> realmRoles) {
 

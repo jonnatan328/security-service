@@ -91,7 +91,7 @@ public class AuthenticationController {
         String refreshToken = request != null ? request.refreshToken() : null;
 
         return handler.signOut(accessToken, refreshToken, ipAddress, userAgent)
-                .then(Mono.just(ResponseEntity.noContent().<Void>build()));
+                .then(Mono.just(ResponseEntity.noContent().build()));
     }
 
     @PostMapping(value = "/refresh", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -1,7 +1,10 @@
 package com.company.security.shared.infrastructure.config.security;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
@@ -10,7 +13,9 @@ import reactor.core.publisher.Mono;
 
 public class SecurityContextRepository implements ServerSecurityContextRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityContextRepository.class);
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String AUTH_ERROR_ATTR = "AUTH_EXCEPTION";
 
     private final JwtAuthenticationManager authenticationManager;
 
@@ -35,6 +40,11 @@ public class SecurityContextRepository implements ServerSecurityContextRepositor
 
         return authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(token, token))
-                .map(SecurityContextImpl::new);
+                .map(auth -> (SecurityContext) new SecurityContextImpl(auth))
+                .onErrorResume(AuthenticationException.class, e -> {
+                    log.debug("Authentication failed: {}", e.getMessage());
+                    exchange.getAttributes().put(AUTH_ERROR_ATTR, e);
+                    return Mono.empty();
+                });
     }
 }

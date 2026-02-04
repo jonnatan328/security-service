@@ -7,16 +7,17 @@ import com.company.security.password.infrastructure.adapter.input.rest.handler.P
 import com.company.security.password.infrastructure.adapter.input.rest.mapper.PasswordRestMapper;
 import com.company.security.password.infrastructure.adapter.output.client.ClientServiceAdapter;
 import com.company.security.password.infrastructure.adapter.output.directory.DirectoryPasswordAdapter;
+import com.company.security.password.infrastructure.adapter.output.directory.KeycloakDirectoryPasswordAdapter;
 import com.company.security.password.infrastructure.adapter.output.messaging.PasswordEventPublisherAdapter;
 import com.company.security.password.infrastructure.adapter.output.persistence.PasswordAuditMongoAdapter;
 import com.company.security.password.infrastructure.adapter.output.persistence.PasswordResetTokenMongoAdapter;
 import com.company.security.password.infrastructure.adapter.output.persistence.repository.PasswordAuditRepository;
 import com.company.security.password.infrastructure.adapter.output.persistence.repository.PasswordResetTokenRepository;
+import com.company.security.shared.infrastructure.properties.KeycloakProperties;
 import com.company.security.shared.infrastructure.properties.LdapProperties;
 import com.company.security.shared.infrastructure.properties.ServicesProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.reactive.ReactiveKafkaProducerTemplate;
@@ -32,12 +33,20 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class PasswordInfrastructureConfig {
 
     @Bean
-    @ConditionalOnExpression("'${auth.provider:ldap}' != 'keycloak'")
+    @ConditionalOnProperty(name = "auth.provider", havingValue = "ldap", matchIfMissing = true)
     public DirectoryPasswordAdapter directoryPasswordAdapter(
             LdapTemplate ldapTemplate,
             LdapContextSource ldapContextSource,
             LdapProperties ldapProperties) {
         return new DirectoryPasswordAdapter(ldapTemplate, ldapContextSource, ldapProperties);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "auth.provider", havingValue = "keycloak")
+    public KeycloakDirectoryPasswordAdapter keycloakDirectoryPasswordAdapter(
+            WebClient.Builder webClientBuilder,
+            KeycloakProperties keycloakProperties) {
+        return new KeycloakDirectoryPasswordAdapter(webClientBuilder, keycloakProperties);
     }
 
     @Bean
@@ -70,7 +79,6 @@ public class PasswordInfrastructureConfig {
     }
 
     @Bean
-    @ConditionalOnBean({ResetPasswordUseCase.class, UpdatePasswordUseCase.class})
     public PasswordHandler passwordHandler(
             RecoverPasswordUseCase recoverPasswordUseCase,
             ResetPasswordUseCase resetPasswordUseCase,

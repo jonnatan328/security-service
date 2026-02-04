@@ -13,14 +13,12 @@ import java.util.regex.Pattern;
  * Domain service containing password policy business rules.
  * Pure domain logic with no external dependencies.
  */
-public final class PasswordPolicyService {
+public record PasswordPolicyService(PasswordPolicy policy) {
 
     private static final Pattern HAS_UPPERCASE = Pattern.compile("[A-Z]");
     private static final Pattern HAS_LOWERCASE = Pattern.compile("[a-z]");
     private static final Pattern HAS_DIGIT = Pattern.compile("[0-9]");
     private static final Pattern HAS_SPECIAL_CHAR = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]");
-
-    private final PasswordPolicy policy;
 
     public PasswordPolicyService(PasswordPolicy policy) {
         this.policy = policy != null ? policy : PasswordPolicy.defaultPolicy();
@@ -95,6 +93,7 @@ public final class PasswordPolicyService {
      *
      * @return the password policy
      */
+    @Override
     public PasswordPolicy policy() {
         return policy;
     }

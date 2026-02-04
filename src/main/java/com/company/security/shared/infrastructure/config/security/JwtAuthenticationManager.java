@@ -3,12 +3,16 @@ package com.company.security.shared.infrastructure.config.security;
 import com.company.security.authentication.domain.model.TokenClaims;
 import com.company.security.authentication.domain.port.output.TokenBlacklistPort;
 import com.company.security.authentication.domain.port.output.TokenProviderPort;
+import com.company.security.token.domain.exception.InvalidTokenException;
+import com.company.security.token.domain.exception.TokenExpiredException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import reactor.core.publisher.Mono;
 
@@ -32,7 +36,18 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
         return tokenProviderPort.parseAccessToken(token)
                 .flatMap(this::checkBlacklist)
                 .map(this::createAuthentication)
+                .onErrorMap(e -> !(e instanceof AuthenticationException), this::mapToAuthenticationException)
                 .doOnError(e -> log.debug("JWT authentication failed: {}", e.getMessage()));
+    }
+
+    private AuthenticationException mapToAuthenticationException(Throwable e) {
+        if (e instanceof TokenExpiredException) {
+            return new CredentialsExpiredException("Token has expired", e);
+        }
+        if (e instanceof InvalidTokenException) {
+            return new BadCredentialsException("Invalid token", e);
+        }
+        return new BadCredentialsException("Authentication failed: " + e.getMessage(), e);
     }
 
     private Mono<TokenClaims> checkBlacklist(TokenClaims claims) {
