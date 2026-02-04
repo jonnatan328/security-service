@@ -8,6 +8,7 @@ import com.company.security.password.infrastructure.adapter.input.rest.dto.reque
 import com.company.security.password.infrastructure.adapter.input.rest.dto.request.UpdatePasswordRequest;
 import com.company.security.password.infrastructure.adapter.input.rest.dto.response.PasswordOperationResponse;
 import com.company.security.password.infrastructure.adapter.input.rest.mapper.PasswordRestMapper;
+import com.company.security.shared.infrastructure.adapter.output.ratelimit.RedisRateLimited;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,6 +33,7 @@ public class PasswordHandler {
         this.mapper = mapper;
     }
 
+    @RedisRateLimited(keyPrefix = "security:ratelimit:recovery:", maxRequests = 3, windowSeconds = 3600, keyParamName = "ipAddress")
     public Mono<PasswordOperationResponse> recoverPassword(RecoverPasswordRequest request,
                                                             String ipAddress, String userAgent) {
         return recoverPasswordUseCase.recoverPassword(request.email(), ipAddress, userAgent)

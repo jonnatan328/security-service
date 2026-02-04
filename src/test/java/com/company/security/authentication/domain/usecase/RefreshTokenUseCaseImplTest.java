@@ -25,7 +25,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -97,11 +96,12 @@ class RefreshTokenUseCaseImplTest {
     }
 
     @Test
-    void refreshToken_withBlacklistedToken_throwsInvalidTokenException() {
+    void refreshToken_withBlacklistedToken_invalidatesAllSessionsAndThrowsInvalidTokenException() {
         TokenClaims claims = buildTokenClaims();
 
         when(tokenProviderPort.parseRefreshToken(REFRESH_TOKEN)).thenReturn(Mono.just(claims));
         when(tokenBlacklistPort.isBlacklisted(JTI)).thenReturn(Mono.just(true));
+        when(refreshTokenPort.deleteAllForUser(USER_ID)).thenReturn(Mono.empty());
 
         StepVerifier.create(refreshTokenUseCase.refreshToken(REFRESH_TOKEN, IP_ADDRESS, USER_AGENT))
                 .expectError(InvalidTokenException.class)
@@ -140,7 +140,7 @@ class RefreshTokenUseCaseImplTest {
         Instant now = Instant.now();
         return TokenClaims.builder()
                 .jti(jti)
-                .subject(USERNAME)
+                .subject(USER_ID)
                 .userId(USER_ID)
                 .username(USERNAME)
                 .email("john.doe@company.com")

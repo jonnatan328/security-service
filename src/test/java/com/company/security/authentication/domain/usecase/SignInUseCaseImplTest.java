@@ -2,7 +2,6 @@ package com.company.security.authentication.domain.usecase;
 
 import com.company.security.authentication.domain.exception.InvalidCredentialsException;
 import com.company.security.authentication.domain.model.AuthenticatedUser;
-import com.company.security.authentication.domain.model.AuthenticationResult;
 import com.company.security.authentication.domain.model.Credentials;
 import com.company.security.authentication.domain.model.TokenClaims;
 import com.company.security.authentication.domain.model.TokenPair;
@@ -24,7 +23,6 @@ import java.time.Instant;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -132,7 +130,7 @@ class SignInUseCaseImplTest {
         Instant now = Instant.now();
         return TokenClaims.builder()
                 .jti("jti-1234567890123456")
-                .subject(USERNAME)
+                .subject(USER_ID)
                 .userId(USER_ID)
                 .username(USERNAME)
                 .email("john.doe@company.com")

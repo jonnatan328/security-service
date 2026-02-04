@@ -2,6 +2,7 @@ package com.company.security.authentication.domain.usecase;
 
 import com.company.security.authentication.domain.exception.InvalidCredentialsException;
 import com.company.security.authentication.domain.model.AuthenticatedUser;
+import com.company.security.authentication.domain.model.TokenClaims;
 import com.company.security.authentication.domain.model.TokenPair;
 import com.company.security.authentication.domain.service.AuthenticationDomainService;
 import com.company.security.authentication.domain.port.input.RefreshTokenUseCase;
@@ -58,8 +59,10 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
                     return tokenBlacklistPort.isBlacklisted(claims.jti())
                             .flatMap(isBlacklisted -> {
                                 if (isBlacklisted) {
-                                    log.warn("Refresh token is blacklisted: {}", claims.jti());
-                                    return Mono.error(new InvalidTokenException("Refresh token has been revoked"));
+                                    log.warn("Reuse of already-rotated refresh token detected for user: {}. "
+                                            + "Possible token compromise — invalidating all sessions.", claims.userId());
+                                    return refreshTokenPort.deleteAllForUser(claims.userId())
+                                            .then(Mono.error(new InvalidTokenException("Refresh token has been revoked")));
                                 }
 
                                 return refreshTokenPort.retrieve(claims.userId(), claims.deviceId())
@@ -72,7 +75,7 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
 
                                             return directoryServicePort.findByUsername(claims.username())
                                                     .switchIfEmpty(Mono.error(new InvalidCredentialsException(claims.username())))
-                                                    .flatMap(user -> generateNewTokens(user, claims.deviceId(), claims.jti()));
+                                                    .flatMap(user -> generateNewTokens(user, claims.deviceId(), claims.jti(), claims));
                                         });
                             });
                 })
@@ -84,10 +87,10 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
                 });
     }
 
-    private Mono<TokenPair> generateNewTokens(AuthenticatedUser user, String deviceId, String oldRefreshJti) {
+    private Mono<TokenPair> generateNewTokens(AuthenticatedUser user, String deviceId, String oldRefreshJti, TokenClaims oldClaims) {
         return tokenProviderPort.generateTokenPair(user, deviceId)
                 .flatMap(newTokenPair -> {
-                    Mono<Void> blacklistOld = tokenBlacklistPort.blacklist(oldRefreshJti, 60);
+                    Mono<Void> blacklistOld = tokenBlacklistPort.blacklist(oldRefreshJti, oldClaims.remainingTimeInSeconds());
 
                     Mono<Void> storeNew = tokenProviderPort.parseRefreshToken(newTokenPair.refreshToken())
                             .flatMap(newClaims -> refreshTokenPort.store(

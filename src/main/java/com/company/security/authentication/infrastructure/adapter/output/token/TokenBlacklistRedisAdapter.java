@@ -54,11 +54,6 @@ public class TokenBlacklistRedisAdapter implements TokenBlacklistPort {
                         log.debug("Token found in blacklist: {}", jti);
                     }
                 })
-                .onErrorResume(e -> {
-                    log.error("Failed to check blacklist for token: {}", jti, e);
-                    // Fail closed - if we can't check, assume not blacklisted
-                    // This is a trade-off; in high-security scenarios, fail open might be better
-                    return Mono.just(false);
-                });
+                .doOnError(e -> log.error("Failed to check blacklist for token: {}", jti, e));
     }
 }

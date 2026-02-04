@@ -6,11 +6,14 @@ import com.company.security.token.infrastructure.adapter.input.rest.handler.Toke
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/internal/v1/token")
@@ -24,8 +27,13 @@ public class TokenValidationController {
 
     @PostMapping(value = "/validate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Mono<ResponseEntity<TokenValidationResponse>> validate(
-            @Valid @RequestBody ValidateTokenRequest request) {
-        return handler.validate(request)
+            @Valid @RequestBody ValidateTokenRequest request,
+            ServerHttpRequest httpRequest) {
+        String ipAddress = Optional.ofNullable(httpRequest.getHeaders().getFirst("X-Forwarded-For"))
+                .orElseGet(() -> Optional.ofNullable(httpRequest.getRemoteAddress())
+                        .map(addr -> addr.getAddress().getHostAddress())
+                        .orElse("unknown"));
+        return handler.validate(request, ipAddress)
                 .map(ResponseEntity::ok);
     }
 }

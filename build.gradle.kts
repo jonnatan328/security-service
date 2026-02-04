@@ -41,6 +41,7 @@ dependencyManagement {
 
 dependencies {
     // Spring Boot Starters
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -66,7 +67,6 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-spring-boot3")
     implementation("io.github.resilience4j:resilience4j-reactor")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker")
-    implementation("io.github.resilience4j:resilience4j-ratelimiter")
     implementation("io.github.resilience4j:resilience4j-retry")
     implementation("io.github.resilience4j:resilience4j-timelimiter")
 

@@ -3,7 +3,13 @@ package com.company.security.authentication.infrastructure.adapter.output.direct
 import com.company.security.authentication.domain.model.AuthenticatedUser;
 import com.company.security.shared.infrastructure.properties.KeycloakProperties;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -19,30 +25,19 @@ public class KeycloakUserMapper {
 
     @SuppressWarnings("unchecked")
     public AuthenticatedUser map(Map<String, Object> tokenClaims, Map<String, Object> userInfoClaims) {
-        String userId = getStringClaim(userInfoClaims, "sub");
-        String username = getStringClaim(userInfoClaims, "preferred_username");
-        String email = getStringClaim(userInfoClaims, "email");
+        String userId = getClaimWithFallback(userInfoClaims, tokenClaims, "sub");
+        String username = getClaimWithFallback(userInfoClaims, tokenClaims, "preferred_username");
+        String email = getClaimWithFallback(userInfoClaims, tokenClaims, "email");
         String firstName = getStringClaim(userInfoClaims, "given_name");
         String lastName = getStringClaim(userInfoClaims, "family_name");
-
-        // Fallbacks from token claims if userinfo is missing values
-        if (userId == null) {
-            userId = getStringClaim(tokenClaims, "sub");
-        }
-        if (username == null) {
-            username = getStringClaim(tokenClaims, "preferred_username");
-        }
-        if (email == null) {
-            email = getStringClaim(tokenClaims, "email");
-        }
 
         Set<String> roles = extractRoles(tokenClaims);
         Set<String> groups = extractGroups(userInfoClaims);
 
-        String effectiveEmail = email != null ? email : username + "@unknown.local";
+        String effectiveEmail = Objects.requireNonNullElse(email, username + "@unknown.local");
 
         return AuthenticatedUser.builder()
-                .userId(userId != null ? userId : username)
+                .userId(Objects.requireNonNullElse(userId, username))
                 .username(username)
                 .email(effectiveEmail)
                 .firstName(firstName)
@@ -60,56 +55,46 @@ public class KeycloakUserMapper {
 
         // Extract realm roles
         if (mapping.isUseRealmRoles()) {
-            Map<String, Object> realmAccess = (Map<String, Object>) tokenClaims.get("realm_access");
-            if (realmAccess != null) {
-                List<String> realmRoles = (List<String>) realmAccess.get("roles");
-                if (realmRoles != null) {
-                    roles.addAll(realmRoles);
-                }
-            }
+            Optional.ofNullable((Map<String, Object>) tokenClaims.get("realm_access"))
+                    .map(realmAccess -> (List<String>) realmAccess.get("roles"))
+                    .ifPresent(roles::addAll);
         }
 
         // Extract client roles
         if (mapping.isUseClientRoles()) {
-            String clientIdForRoles = mapping.getClientIdForRoles();
-            if (clientIdForRoles == null || clientIdForRoles.isBlank()) {
-                clientIdForRoles = keycloakProperties.getClientId();
-            }
-            Map<String, Object> resourceAccess = (Map<String, Object>) tokenClaims.get("resource_access");
-            if (resourceAccess != null) {
-                Map<String, Object> clientAccess = (Map<String, Object>) resourceAccess.get(clientIdForRoles);
-                if (clientAccess != null) {
-                    List<String> clientRoles = (List<String>) clientAccess.get("roles");
-                    if (clientRoles != null) {
-                        roles.addAll(clientRoles);
-                    }
-                }
-            }
+            String clientIdForRoles = Optional.ofNullable(mapping.getClientIdForRoles())
+                    .filter(id -> !id.isBlank())
+                    .orElse(keycloakProperties.getClientId());
+
+            Optional.ofNullable((Map<String, Object>) tokenClaims.get("resource_access"))
+                    .map(resourceAccess -> (Map<String, Object>) resourceAccess.get(clientIdForRoles))
+                    .map(clientAccess -> (List<String>) clientAccess.get("roles"))
+                    .ifPresent(roles::addAll);
         }
 
         // Filter and normalize roles: keep APP_ and ROLE_ prefixed roles
         return roles.stream()
                 .filter(role -> role.startsWith("APP_") || role.startsWith("ROLE_"))
-                .map(role -> {
-                    if (role.startsWith("APP_")) {
-                        return "ROLE_" + role.substring(4);
-                    }
-                    return role;
-                })
+                .map(role -> role.startsWith("APP_") ? "ROLE_" + role.substring(4) : role)
                 .collect(Collectors.toSet());
     }
 
     @SuppressWarnings("unchecked")
     Set<String> extractGroups(Map<String, Object> claims) {
-        Object groupsClaim = claims.get("groups");
-        if (groupsClaim instanceof List) {
-            return new HashSet<>((List<String>) groupsClaim);
+        if (claims.get("groups") instanceof List<?> groupsList) {
+            return new HashSet<>((List<String>) groupsList);
         }
         return Collections.emptySet();
     }
 
     private String getStringClaim(Map<String, Object> claims, String key) {
-        Object value = claims.get(key);
-        return value != null ? value.toString() : null;
+        return Optional.ofNullable(claims.get(key))
+                .map(Object::toString)
+                .orElse(null);
+    }
+
+    private String getClaimWithFallback(Map<String, Object> primary, Map<String, Object> fallback, String key) {
+        return Optional.ofNullable(getStringClaim(primary, key))
+                .orElseGet(() -> getStringClaim(fallback, key));
     }
 }

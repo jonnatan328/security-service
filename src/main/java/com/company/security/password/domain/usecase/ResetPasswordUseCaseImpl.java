@@ -64,11 +64,10 @@ public class ResetPasswordUseCaseImpl implements ResetPasswordUseCase {
                 })
                 .onErrorResume(e -> {
                     log.error("Password reset failed: {}", e.getMessage());
-                    if (e instanceof PasswordResetTokenInvalidException ||
-                        e instanceof PasswordResetTokenExpiredException) {
-                        return Mono.error(e);
+                    if (!(e instanceof PasswordResetTokenInvalidException)
+                            && !(e instanceof PasswordResetTokenExpiredException)) {
+                        recordAuditFailure(e.getMessage(), ipAddress, userAgent);
                     }
-                    recordAuditFailure(e.getMessage(), ipAddress, userAgent);
                     return Mono.error(e);
                 });
     }

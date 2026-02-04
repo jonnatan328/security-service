@@ -7,7 +7,10 @@ import com.company.security.authentication.domain.port.output.TokenProviderPort;
 import com.company.security.shared.infrastructure.properties.JwtProperties;
 import com.company.security.token.domain.exception.InvalidTokenException;
 import com.company.security.token.domain.exception.TokenExpiredException;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
@@ -17,8 +20,13 @@ import reactor.core.publisher.Mono;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * JWT Token Provider adapter implementation.
@@ -116,7 +124,7 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
 
         return Jwts.builder()
                 .id(jti)
-                .subject(user.username())
+                .subject(user.userId())
                 .issuer(jwtProperties.getIssuer())
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt))

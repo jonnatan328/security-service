@@ -3,6 +3,7 @@ package com.company.security.authentication.infrastructure.adapter.output.token;
 import com.company.security.authentication.domain.model.TokenClaims;
 import com.company.security.authentication.domain.port.output.RefreshTokenPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +11,14 @@ import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
 import reactor.core.publisher.Mono;
 
+import java.io.UncheckedIOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Redis adapter for refresh token storage.
@@ -22,6 +28,7 @@ public class RefreshTokenRedisAdapter implements RefreshTokenPort {
 
     private static final Logger log = LoggerFactory.getLogger(RefreshTokenRedisAdapter.class);
     private static final String KEY_PREFIX = "security:refresh:";
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
 
     private final ReactiveStringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -82,27 +89,27 @@ public class RefreshTokenRedisAdapter implements RefreshTokenPort {
 
     private String serializeClaims(TokenClaims claims) {
         try {
-            Map<String, Object> map = new HashMap<>();
-            map.put("jti", claims.jti());
-            map.put("subject", claims.subject());
-            map.put("userId", claims.userId());
-            map.put("username", claims.username());
-            map.put("email", claims.email());
-            map.put("roles", claims.roles());
-            map.put("deviceId", claims.deviceId());
-            map.put("issuedAt", claims.issuedAt().toEpochMilli());
-            map.put("expiresAt", claims.expiresAt().toEpochMilli());
-            map.put("issuer", claims.issuer());
+            Map<String, Object> map = Map.ofEntries(
+                    Map.entry("jti", claims.jti()),
+                    Map.entry("subject", claims.subject()),
+                    Map.entry("userId", claims.userId()),
+                    Map.entry("username", claims.username()),
+                    Map.entry("email", claims.email()),
+                    Map.entry("roles", claims.roles()),
+                    Map.entry("deviceId", claims.deviceId()),
+                    Map.entry("issuedAt", claims.issuedAt().toEpochMilli()),
+                    Map.entry("expiresAt", claims.expiresAt().toEpochMilli()),
+                    Map.entry("issuer", claims.issuer()));
             return objectMapper.writeValueAsString(map);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize token claims", e);
+            throw new UncheckedIOException("Failed to serialize token claims", e);
         }
     }
 
     @SuppressWarnings("unchecked")
     private TokenClaims deserializeClaims(String serialized) {
         try {
-            Map<String, Object> map = objectMapper.readValue(serialized, Map.class);
+            Map<String, Object> map = objectMapper.readValue(serialized, MAP_TYPE_REF);
 
             List<String> rolesList = (List<String>) map.get("roles");
             Set<String> roles = rolesList != null ? new HashSet<>(rolesList) : Collections.emptySet();
@@ -120,7 +127,7 @@ public class RefreshTokenRedisAdapter implements RefreshTokenPort {
                     .issuer((String) map.get("issuer"))
                     .build();
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to deserialize token claims", e);
+            throw new UncheckedIOException("Failed to deserialize token claims", e);
         }
     }
 }

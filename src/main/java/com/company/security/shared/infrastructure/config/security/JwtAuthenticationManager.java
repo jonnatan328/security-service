@@ -5,14 +5,13 @@ import com.company.security.authentication.domain.port.output.TokenBlacklistPort
 import com.company.security.authentication.domain.port.output.TokenProviderPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
 public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
 
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationManager.class);
@@ -38,12 +37,9 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
 
     private Mono<TokenClaims> checkBlacklist(TokenClaims claims) {
         return tokenBlacklistPort.isBlacklisted(claims.jti())
-                .flatMap(isBlacklisted -> {
-                    if (Boolean.TRUE.equals(isBlacklisted)) {
-                        return Mono.error(new org.springframework.security.authentication.BadCredentialsException("Token has been revoked"));
-                    }
-                    return Mono.just(claims);
-                });
+                .filter(isBlacklisted -> !isBlacklisted)
+                .switchIfEmpty(Mono.error(new BadCredentialsException("Token has been revoked")))
+                .thenReturn(claims);
     }
 
     private Authentication createAuthentication(TokenClaims claims) {
@@ -51,8 +47,10 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .toList();
 
+        var principal = new JwtAuthenticatedPrincipal(claims);
+
         return new UsernamePasswordAuthenticationToken(
-                claims.subject(),
+                principal,
                 null,
                 authorities
         );

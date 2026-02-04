@@ -74,7 +74,7 @@ class SignOutUseCaseImplTest {
         Instant now = Instant.now();
         return TokenClaims.builder()
                 .jti("jti-1234567890123456")
-                .subject(USERNAME)
+                .subject(USER_ID)
                 .userId(USER_ID)
                 .username(USERNAME)
                 .email("john.doe@company.com")

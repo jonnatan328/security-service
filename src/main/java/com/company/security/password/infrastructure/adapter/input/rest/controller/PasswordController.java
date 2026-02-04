@@ -6,7 +6,6 @@ import com.company.security.password.infrastructure.adapter.input.rest.dto.reque
 import com.company.security.password.infrastructure.adapter.input.rest.dto.response.PasswordOperationResponse;
 import com.company.security.password.infrastructure.adapter.input.rest.handler.PasswordHandler;
 import jakarta.validation.Valid;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,7 +22,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/password")
-@ConditionalOnExpression("'${auth.provider:ldap}' != 'keycloak'")
 public class PasswordController {
 
     private static final String X_FORWARDED_FOR = "X-Forwarded-For";

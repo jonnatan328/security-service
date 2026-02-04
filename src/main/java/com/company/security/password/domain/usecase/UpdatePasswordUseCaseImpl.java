@@ -52,10 +52,9 @@ public class UpdatePasswordUseCaseImpl implements UpdatePasswordUseCase {
                 })
                 .doOnSuccess(result -> log.info("Password updated for user: {}", userId))
                 .onErrorResume(e -> {
-                    if (e instanceof CurrentPasswordMismatchException) {
-                        return Mono.error(e);
+                    if (!(e instanceof CurrentPasswordMismatchException)) {
+                        log.error("Password update failed for user: {}", userId, e);
                     }
-                    log.error("Password update failed for user: {}", userId, e);
                     return Mono.error(e);
                 });
     }

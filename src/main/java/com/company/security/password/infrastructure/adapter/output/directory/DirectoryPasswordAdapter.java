@@ -62,7 +62,7 @@ public class DirectoryPasswordAdapter implements DirectoryPasswordPort {
                 log.info("Password changed in directory for user: {}", userId);
             } catch (Exception e) {
                 log.error("Failed to change password in directory for user: {}", userId, e);
-                throw new RuntimeException("Failed to change password in directory", e);
+                throw new IllegalStateException("Failed to change password in directory", e);
             }
         }).subscribeOn(Schedulers.boundedElastic()).then();
     }

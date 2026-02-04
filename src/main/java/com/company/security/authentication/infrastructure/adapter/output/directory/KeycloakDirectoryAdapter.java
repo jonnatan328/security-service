@@ -23,7 +23,12 @@ import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Keycloak Directory Service adapter implementation.
@@ -60,19 +65,13 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
         log.debug("Authenticating user via Keycloak: {}", credentials.username());
 
         return requestToken(credentials.username(), credentials.password())
-                .flatMap(tokenResponse -> {
-                    String accessToken = (String) tokenResponse.get("access_token");
-                    if (accessToken == null) {
-                        return Mono.error(new DirectoryServiceException("No access_token in Keycloak response"));
-                    }
-
-                    // Decode token payload to extract roles
-                    Map<String, Object> tokenClaims = decodeTokenPayload(accessToken);
-
-                    // Fetch userinfo for user details
-                    return fetchUserInfo(accessToken)
-                            .map(userInfoClaims -> userMapper.map(tokenClaims, userInfoClaims));
-                });
+                .flatMap(tokenResponse -> Mono.justOrEmpty((String) tokenResponse.get("access_token"))
+                        .switchIfEmpty(Mono.error(new DirectoryServiceException("No access_token in Keycloak response")))
+                        .flatMap(accessToken -> {
+                            Map<String, Object> tokenClaims = decodeTokenPayload(accessToken);
+                            return fetchUserInfo(accessToken)
+                                    .map(userInfoClaims -> userMapper.map(tokenClaims, userInfoClaims));
+                        }));
     }
 
     @Override
@@ -82,17 +81,11 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
         log.debug("Looking up user via Keycloak Admin API: {}", username);
 
         return requestClientCredentialsToken()
-                .flatMap(tokenResponse -> {
-                    String accessToken = (String) tokenResponse.get("access_token");
-                    if (accessToken == null) {
-                        return Mono.<AuthenticatedUser>error(
-                                new DirectoryServiceException("No access_token in client credentials response"));
-                    }
-
-                    return fetchUserByUsername(accessToken, username)
-                            .flatMap(userData -> fetchUserRealmRoles(accessToken, (String) userData.get("id"))
-                                    .map(roles -> mapAdminUserToAuthenticatedUser(userData, roles)));
-                });
+                .flatMap(tokenResponse -> Mono.justOrEmpty((String) tokenResponse.get("access_token"))
+                        .switchIfEmpty(Mono.error(new DirectoryServiceException("No access_token in client credentials response")))
+                        .flatMap(accessToken -> fetchUserByUsername(accessToken, username)
+                                .flatMap(userData -> fetchUserRealmRoles(accessToken, (String) userData.get("id"))
+                                        .map(roles -> mapAdminUserToAuthenticatedUser(userData, roles)))));
     }
 
     @Override
@@ -174,18 +167,14 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                         response.bodyToMono(String.class)
                                 .flatMap(body -> Mono.error(new DirectoryServiceException(
                                         "Failed to fetch user from Keycloak Admin API"))))
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.List<Map<String, Object>>>() {})
-                .flatMap(users -> {
-                    if (users == null || users.isEmpty()) {
-                        return Mono.error(new DirectoryServiceException(
-                                "User not found in Keycloak: " + username));
-                    }
-                    return Mono.just(users.get(0));
-                });
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                .filter(users -> users != null && !users.isEmpty())
+                .switchIfEmpty(Mono.error(new DirectoryServiceException("User not found in Keycloak: " + username)))
+                .map(users -> users.get(0));
     }
 
     @SuppressWarnings("unchecked")
-    private Mono<java.util.List<Map<String, Object>>> fetchUserRealmRoles(String accessToken, String userId) {
+    private Mono<List<Map<String, Object>>> fetchUserRealmRoles(String accessToken, String userId) {
         String rolesUri = String.format("/admin/realms/%s/users/%s/role-mappings/realm",
                 keycloakProperties.getRealm(), userId);
 
@@ -196,38 +185,32 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)
                                 .then(Mono.empty()))
-                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<java.util.List<Map<String, Object>>>() {})
+                .bodyToMono(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {})
                 .onErrorReturn(Collections.emptyList());
     }
 
     @SuppressWarnings("unchecked")
     private AuthenticatedUser mapAdminUserToAuthenticatedUser(
-            Map<String, Object> userData, java.util.List<Map<String, Object>> realmRoles) {
+            Map<String, Object> userData, List<Map<String, Object>> realmRoles) {
 
-        String userId = (String) userData.get("id");
         String username = (String) userData.get("username");
-        String email = (String) userData.get("email");
-        String firstName = (String) userData.get("firstName");
-        String lastName = (String) userData.get("lastName");
-        Boolean enabled = (Boolean) userData.get("enabled");
 
-        java.util.Set<String> roles = realmRoles.stream()
+        Set<String> roles = realmRoles.stream()
                 .map(role -> (String) role.get("name"))
-                .filter(name -> name != null && (name.startsWith("APP_") || name.startsWith("ROLE_")))
+                .filter(Objects::nonNull)
+                .filter(name -> name.startsWith("APP_") || name.startsWith("ROLE_"))
                 .map(name -> name.startsWith("APP_") ? "ROLE_" + name.substring(4) : name)
-                .collect(java.util.stream.Collectors.toSet());
-
-        String effectiveEmail = email != null ? email : username + "@unknown.local";
+                .collect(Collectors.toSet());
 
         return AuthenticatedUser.builder()
-                .userId(userId)
+                .userId((String) userData.get("id"))
                 .username(username)
-                .email(effectiveEmail)
-                .firstName(firstName)
-                .lastName(lastName)
+                .email(Objects.requireNonNullElse((String) userData.get("email"), username + "@unknown.local"))
+                .firstName((String) userData.get("firstName"))
+                .lastName((String) userData.get("lastName"))
                 .roles(roles)
                 .groups(Collections.emptySet())
-                .enabled(enabled != null ? enabled : true)
+                .enabled(Optional.ofNullable((Boolean) userData.get("enabled")).orElse(true))
                 .build();
     }
 
@@ -275,8 +258,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
         if (t instanceof InvalidCredentialsException || t instanceof AccountDisabledException) {
             return Mono.error(t);
         }
-        log.error("Circuit breaker open for Keycloak authentication, failing request for user: {}",
-                credentials.username(), t);
+        log.error("Circuit breaker open for Keycloak authentication, failing request for user: {}", credentials.username(), t);
         return Mono.error(new DirectoryServiceException("Directory service temporarily unavailable", t));
     }
 

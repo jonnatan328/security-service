@@ -4,7 +4,8 @@ import com.company.security.authentication.domain.model.AuthenticatedUser;
 import org.springframework.ldap.core.DirContextOperations;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class DirectoryUserMapper {
         return AuthenticatedUser.builder()
                 .userId(userId)
                 .username(username)
-                .email(email != null ? email : username + "@unknown.local")
+                .email(Objects.requireNonNullElse(email, username + "@unknown.local"))
                 .firstName(firstName)
                 .lastName(lastName)
                 .groups(groups)
@@ -41,14 +42,13 @@ public class DirectoryUserMapper {
     }
 
     private String getStringAttribute(DirContextOperations ctx, String attributeName, String defaultValue) {
-        String value = ctx.getStringAttribute(attributeName);
-        return value != null ? value : defaultValue;
+        return Objects.requireNonNullElse(ctx.getStringAttribute(attributeName), defaultValue);
     }
 
     private Set<String> getGroups(DirContextOperations ctx) {
         String[] memberOf = ctx.getStringAttributes(ATTR_MEMBER_OF);
         if (memberOf == null) {
-            return new HashSet<>();
+            return Collections.emptySet();
         }
         return Arrays.stream(memberOf)
                 .map(this::extractGroupName)
@@ -72,12 +72,7 @@ public class DirectoryUserMapper {
         // e.g., "APP_ADMIN" -> "ROLE_ADMIN", "APP_USER" -> "ROLE_USER"
         return groups.stream()
                 .filter(group -> group.startsWith("APP_") || group.startsWith("ROLE_"))
-                .map(group -> {
-                    if (group.startsWith("APP_")) {
-                        return "ROLE_" + group.substring(4);
-                    }
-                    return group;
-                })
+                .map(group -> group.startsWith("APP_") ? "ROLE_" + group.substring(4) : group)
                 .collect(Collectors.toSet());
     }
 }

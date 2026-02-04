@@ -100,6 +100,11 @@ public class RestExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Current Password Mismatch", ex.getMessage(), request, ex.code());
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitExceeded(RateLimitExceededException ex, ServerHttpRequest request) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", ex.getMessage(), request, "GEN-902");
+    }
+
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex, ServerHttpRequest request) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Domain Error", ex.getMessage(), request, ex.code());
@@ -108,7 +113,8 @@ public class RestExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, ServerHttpRequest request) {
         log.error("Unexpected error", ex);
-        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", ex.getMessage(), request, "GEN-900");
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                "An unexpected error occurred. Please try again later.", request, "GEN-900");
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String title, String detail,

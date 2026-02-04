@@ -1,5 +1,7 @@
 package com.company.security.shared.infrastructure.config.database;
 
+import com.company.security.shared.infrastructure.adapter.output.ratelimit.RateLimitingRedisAdapter;
+import com.company.security.shared.infrastructure.adapter.output.ratelimit.RedisRateLimitAspect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
@@ -26,5 +28,16 @@ public class RedisConfig {
                 .build();
 
         return new ReactiveRedisTemplate<>(connectionFactory, context);
+    }
+
+    @Bean
+    public RateLimitingRedisAdapter rateLimitingRedisAdapter(
+            ReactiveRedisTemplate<String, String> reactiveRedisTemplate) {
+        return new RateLimitingRedisAdapter(reactiveRedisTemplate);
+    }
+
+    @Bean
+    public RedisRateLimitAspect redisRateLimitAspect(RateLimitingRedisAdapter rateLimitingRedisAdapter) {
+        return new RedisRateLimitAspect(rateLimitingRedisAdapter);
     }
 }

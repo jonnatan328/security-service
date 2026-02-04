@@ -8,6 +8,7 @@ import com.company.security.authentication.infrastructure.adapter.input.rest.dto
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.AuthenticationResponse;
 import com.company.security.authentication.infrastructure.adapter.input.rest.dto.response.TokenResponse;
 import com.company.security.authentication.infrastructure.adapter.input.rest.mapper.AuthenticationRestMapper;
+import com.company.security.shared.infrastructure.adapter.output.ratelimit.RedisRateLimited;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,6 +33,7 @@ public class AuthenticationHandler {
         this.mapper = mapper;
     }
 
+    @RedisRateLimited(keyPrefix = "security:ratelimit:signin:", maxRequests = 10, windowSeconds = 60, keyParamName = "ipAddress")
     public Mono<AuthenticationResponse> signIn(SignInRequest request, String deviceId,
                                                   String ipAddress, String userAgent) {
         return signInUseCase.signIn(mapper.toCredentials(request, deviceId), ipAddress, userAgent)
