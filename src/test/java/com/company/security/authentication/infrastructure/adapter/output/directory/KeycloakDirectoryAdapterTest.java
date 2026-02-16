@@ -3,7 +3,6 @@ package com.company.security.authentication.infrastructure.adapter.output.direct
 import com.company.security.authentication.domain.exception.AccountDisabledException;
 import com.company.security.authentication.domain.exception.DirectoryServiceException;
 import com.company.security.authentication.domain.exception.InvalidCredentialsException;
-import com.company.security.authentication.domain.model.AuthenticatedUser;
 import com.company.security.authentication.domain.model.Credentials;
 import com.company.security.shared.infrastructure.properties.KeycloakProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +17,6 @@ import reactor.test.StepVerifier;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -160,7 +158,7 @@ class KeycloakDirectoryAdapterTest {
     }
 
     @Test
-    void isAvailableShouldReturnTrueWhenRealmEndpointResponds() throws Exception {
+    void isAvailableShouldReturnTrueWhenRealmEndpointResponds() {
         mockWebServer.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setBody("{\"realm\":\"test-realm\"}")
@@ -253,8 +251,7 @@ class KeycloakDirectoryAdapterTest {
 
         Map<String, Object> result = adapter.decodeTokenPayload(fakeJwt);
 
-        assertThat(result).containsEntry("sub", "user-1");
-        assertThat(result).containsEntry("name", "Test");
+        assertThat(result).containsEntry("sub", "user-1").containsEntry("name", "Test");
     }
 
     @Test

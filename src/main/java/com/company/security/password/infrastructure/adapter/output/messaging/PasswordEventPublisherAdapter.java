@@ -17,6 +17,7 @@ public class PasswordEventPublisherAdapter implements EventPublisherPort {
 
     private static final Logger log = LoggerFactory.getLogger(PasswordEventPublisherAdapter.class);
     private static final String TOPIC = "security.password.events";
+    private static final String CORRELATION_ID = "correlationId";
 
     private final ReactiveKafkaProducerTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -43,7 +44,7 @@ public class PasswordEventPublisherAdapter implements EventPublisherPort {
                             "resetUrl", resetUrl
                     ),
                     "metadata", Map.of(
-                            "correlationId", MDC.get("correlationId") != null ? MDC.get("correlationId") : "",
+                            CORRELATION_ID, MDC.get(CORRELATION_ID) != null ? MDC.get(CORRELATION_ID) : "",
                             "source", "security-service"
                     )
             );

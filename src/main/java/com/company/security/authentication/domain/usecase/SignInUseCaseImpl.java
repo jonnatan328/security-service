@@ -1,6 +1,5 @@
 package com.company.security.authentication.domain.usecase;
 
-import com.company.security.authentication.domain.exception.InvalidCredentialsException;
 import com.company.security.authentication.domain.model.AuthenticationResult;
 import com.company.security.authentication.domain.model.Credentials;
 import com.company.security.authentication.domain.service.AuthenticationDomainService;

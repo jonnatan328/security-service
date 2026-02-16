@@ -14,4 +14,8 @@ public final class TokenExpiredException extends TokenException {
     public TokenExpiredException(String jti) {
         super(ErrorCode.TKN_EXPIRED, "Token expired: " + jti);
     }
+
+    public TokenExpiredException(Throwable cause) {
+        super(ErrorCode.TKN_EXPIRED, cause);
+    }
 }

@@ -58,7 +58,7 @@ public class RefreshTokenUseCaseImpl implements RefreshTokenUseCase {
 
                     return tokenBlacklistPort.isBlacklisted(claims.jti())
                             .flatMap(isBlacklisted -> {
-                                if (isBlacklisted) {
+                                if (Boolean.TRUE.equals(isBlacklisted)) {
                                     log.warn("Reuse of already-rotated refresh token detected for user: {}. "
                                             + "Possible token compromise — invalidating all sessions.", claims.userId());
                                     return refreshTokenPort.deleteAllForUser(claims.userId())

@@ -11,7 +11,7 @@ public final class Password {
 
     private static final Pattern HAS_UPPERCASE = Pattern.compile("[A-Z]");
     private static final Pattern HAS_LOWERCASE = Pattern.compile("[a-z]");
-    private static final Pattern HAS_DIGIT = Pattern.compile("[0-9]");
+    private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
     private static final Pattern HAS_SPECIAL_CHAR = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]");
 
     private final String value;

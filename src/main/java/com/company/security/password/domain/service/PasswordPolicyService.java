@@ -17,7 +17,7 @@ public record PasswordPolicyService(PasswordPolicy policy) {
 
     private static final Pattern HAS_UPPERCASE = Pattern.compile("[A-Z]");
     private static final Pattern HAS_LOWERCASE = Pattern.compile("[a-z]");
-    private static final Pattern HAS_DIGIT = Pattern.compile("[0-9]");
+    private static final Pattern HAS_DIGIT = Pattern.compile("\\d");
     private static final Pattern HAS_SPECIAL_CHAR = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]");
 
     public PasswordPolicyService(PasswordPolicy policy) {
@@ -88,13 +88,4 @@ public record PasswordPolicyService(PasswordPolicy policy) {
         return token != null && token.isValid();
     }
 
-    /**
-     * Gets the password policy.
-     *
-     * @return the password policy
-     */
-    @Override
-    public PasswordPolicy policy() {
-        return policy;
-    }
 }

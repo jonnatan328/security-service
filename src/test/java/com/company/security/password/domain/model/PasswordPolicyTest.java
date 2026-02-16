@@ -50,14 +50,14 @@ class PasswordPolicyTest {
     @Test
     @DisplayName("Should throw when minLength is less than 1")
     void shouldThrowWhenMinLengthLessThan1() {
-        assertThrows(IllegalArgumentException.class, () ->
-                PasswordPolicy.builder().minLength(0).build());
+        PasswordPolicy.Builder builder = PasswordPolicy.builder().minLength(0);
+        assertThrows(IllegalArgumentException.class, builder::build);
     }
 
     @Test
     @DisplayName("Should throw when maxLength is less than minLength")
     void shouldThrowWhenMaxLengthLessThanMinLength() {
-        assertThrows(IllegalArgumentException.class, () ->
-                PasswordPolicy.builder().minLength(10).maxLength(5).build());
+        PasswordPolicy.Builder builder = PasswordPolicy.builder().minLength(10).maxLength(5);
+        assertThrows(IllegalArgumentException.class, builder::build);
     }
 }

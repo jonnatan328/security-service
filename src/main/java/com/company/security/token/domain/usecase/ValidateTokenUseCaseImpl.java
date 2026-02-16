@@ -35,7 +35,7 @@ public class ValidateTokenUseCaseImpl implements ValidateTokenUseCase {
 
                     return tokenBlacklistCheckPort.isBlacklisted(token.jti())
                             .map(isBlacklisted -> {
-                                if (isBlacklisted) {
+                                if (Boolean.TRUE.equals(isBlacklisted)) {
                                     return TokenValidationResult.revoked();
                                 }
                                 return TokenValidationResult.valid(token);

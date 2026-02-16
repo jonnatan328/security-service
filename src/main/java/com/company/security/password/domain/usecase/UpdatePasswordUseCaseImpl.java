@@ -38,7 +38,7 @@ public class UpdatePasswordUseCaseImpl implements UpdatePasswordUseCase {
 
         return directoryPasswordPort.verifyPassword(userId, currentPassword)
                 .flatMap(isValid -> {
-                    if (!isValid) {
+                    if (Boolean.FALSE.equals(isValid)) {
                         return Mono.error(new CurrentPasswordMismatchException(userId));
                     }
 

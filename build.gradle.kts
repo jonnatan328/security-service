@@ -3,7 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.4.5"
     id("io.spring.dependency-management") version "1.1.7"
     id("jacoco")
-    id("org.sonarqube") version "6.0.1.5171"
+    id("org.sonarqube") version "7.0.1.6134"
     id("com.github.spotbugs") version "6.0.26"
     id("info.solidsoft.pitest") version "1.19.0-rc.2"
     id("org.owasp.dependencycheck") version "12.1.0"
@@ -198,14 +198,51 @@ tasks.spotbugsTest {
     enabled = false
 }
 
-// SonarQube Configuration
+// SonarQube Configuration — see sonar-project.properties for reference
 sonar {
     properties {
+        property("sonar.host.url", "http://localhost:9000")
         property("sonar.projectKey", "security-service")
         property("sonar.projectName", "Security Service")
+        property("sonar.projectVersion", version.toString())
+        property("sonar.sources", "src/main/java")
+        property("sonar.tests", "src/test/java")
+        property("sonar.java.binaries", "${layout.buildDirectory.get()}/classes/java/main")
+        property("sonar.java.test.binaries", "${layout.buildDirectory.get()}/classes/java/test")
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.java.source", "21")
         property("sonar.java.coveragePlugin", "jacoco")
-        property("sonar.coverage.jacoco.xmlReportPaths", "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
-        property("sonar.exclusions", "**/dto/**,**/document/**,**/config/**,**/exception/**,**/properties/**,**/SecurityServiceApplication*")
+        property("sonar.coverage.jacoco.xmlReportPaths",
+            "${layout.buildDirectory.get()}/reports/jacoco/test/jacocoTestReport.xml")
+        property("sonar.junit.reportPaths",
+            "${layout.buildDirectory.get()}/test-results/test")
+        property("sonar.java.spotbugs.reportPaths",
+            "${layout.buildDirectory.get()}/reports/spotbugs/main.xml")
+        property("sonar.exclusions", listOf(
+            "**/dto/**",
+            "**/document/**",
+            "**/config/**",
+            "**/exception/**",
+            "**/properties/**",
+            "**/mapper/**Impl*",
+            "**/SecurityServiceApplication.java"
+        ))
+        property("sonar.coverage.exclusions", listOf(
+            "**/dto/**",
+            "**/document/**",
+            "**/config/**",
+            "**/exception/**",
+            "**/properties/**",
+            "**/mapper/**",
+            "**/filter/**",
+            "**/SecurityServiceApplication.java"
+        ))
+        property("sonar.cpd.exclusions", listOf(
+            "**/dto/**",
+            "**/document/**",
+            "**/properties/**"
+        ))
+        property("sonar.qualitygate.wait", "true")
     }
 }
 

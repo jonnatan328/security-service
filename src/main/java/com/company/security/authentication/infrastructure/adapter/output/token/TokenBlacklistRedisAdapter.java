@@ -50,7 +50,7 @@ public class TokenBlacklistRedisAdapter implements TokenBlacklistPort {
 
         return redisTemplate.hasKey(key)
                 .doOnNext(isBlacklisted -> {
-                    if (isBlacklisted) {
+                    if (Boolean.TRUE.equals(isBlacklisted)) {
                         log.debug("Token found in blacklist: {}", jti);
                     }
                 })

@@ -15,7 +15,6 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,8 +49,8 @@ class UpdatePasswordUseCaseImplTest {
         when(directoryPasswordPort.verifyPassword(USER_ID, CURRENT_PASSWORD)).thenReturn(Mono.just(true));
         when(directoryPasswordPort.changePassword(USER_ID, NEW_PASSWORD)).thenReturn(Mono.empty());
         when(passwordAuditPort.recordEvent(
-                eq(PasswordAuditPort.EventType.PASSWORD_UPDATED),
-                eq(USER_ID), eq(null), eq(true), eq(null), eq(IP_ADDRESS), eq(USER_AGENT)))
+                PasswordAuditPort.EventType.PASSWORD_UPDATED,
+                USER_ID, null, true, null, IP_ADDRESS, USER_AGENT))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(updatePasswordUseCase.updatePassword(USER_ID, CURRENT_PASSWORD, NEW_PASSWORD, IP_ADDRESS, USER_AGENT))

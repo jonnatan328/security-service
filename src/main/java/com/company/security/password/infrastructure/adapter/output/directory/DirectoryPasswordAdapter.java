@@ -50,6 +50,7 @@ public class DirectoryPasswordAdapter implements DirectoryPasswordPort {
     @Override
     @CircuitBreaker(name = "directoryService")
     @Retry(name = "directoryService")
+    @SuppressWarnings("java:S2139") // Exception is logged and rethrown with context
     public Mono<Void> changePassword(String userId, String newPassword) {
         return Mono.fromRunnable(() -> {
             try {

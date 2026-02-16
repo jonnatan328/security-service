@@ -14,4 +14,8 @@ public final class InvalidCredentialsException extends AuthenticationException {
     public InvalidCredentialsException(String username) {
         super(ErrorCode.AUTH_INVALID_CREDENTIALS, "Authentication failed for user: " + username);
     }
+
+    public InvalidCredentialsException(String username, Throwable cause) {
+        super(ErrorCode.AUTH_INVALID_CREDENTIALS, "Authentication failed for user: " + username, cause);
+    }
 }

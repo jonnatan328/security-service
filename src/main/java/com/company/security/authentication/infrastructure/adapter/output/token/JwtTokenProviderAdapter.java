@@ -138,6 +138,7 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
                 .compact();
     }
 
+    @SuppressWarnings("java:S2139") // Exceptions are logged and rethrown with context
     private Mono<TokenClaims> parseToken(String token, SecretKey key, String expectedTokenType) {
         return Mono.fromCallable(() -> {
             try {
@@ -175,18 +176,18 @@ public class JwtTokenProviderAdapter implements TokenProviderPort {
                         .build();
 
             } catch (ExpiredJwtException e) {
-                log.debug("Token expired: {}", e.getMessage());
-                throw new TokenExpiredException();
+                log.debug("Token expired", e);
+                throw new TokenExpiredException(e);
             } catch (SignatureException e) {
-                log.warn("Invalid token signature: {}", e.getMessage());
-                throw new InvalidTokenException("Invalid token signature");
+                log.warn("Invalid token signature", e);
+                throw new InvalidTokenException("Invalid token signature", e);
             } catch (MalformedJwtException e) {
-                log.warn("Malformed token: {}", e.getMessage());
-                throw new InvalidTokenException("Malformed token");
+                log.warn("Malformed token", e);
+                throw new InvalidTokenException("Malformed token", e);
             } catch (InvalidTokenException e) {
                 throw e;
             } catch (Exception e) {
-                log.error("Token parsing error: {}", e.getMessage());
+                log.error("Token parsing error", e);
                 throw new InvalidTokenException("Failed to parse token", e);
             }
         });

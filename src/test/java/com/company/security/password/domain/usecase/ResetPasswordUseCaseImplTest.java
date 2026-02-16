@@ -21,8 +21,6 @@ import reactor.test.StepVerifier;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,8 +63,8 @@ class ResetPasswordUseCaseImplTest {
         when(directoryPasswordPort.resetPassword(USER_ID, NEW_PASSWORD)).thenReturn(Mono.empty());
         when(passwordResetTokenPort.markAsUsed(TOKEN)).thenReturn(Mono.just(resetToken.markAsUsed()));
         when(passwordAuditPort.recordEvent(
-                eq(PasswordAuditPort.EventType.PASSWORD_RESET_COMPLETED),
-                eq(USER_ID), eq(EMAIL), eq(true), eq(null), eq(IP_ADDRESS), eq(USER_AGENT)))
+                PasswordAuditPort.EventType.PASSWORD_RESET_COMPLETED,
+                USER_ID, EMAIL, true, null, IP_ADDRESS, USER_AGENT))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(resetPasswordUseCase.resetPassword(TOKEN, NEW_PASSWORD, IP_ADDRESS, USER_AGENT))

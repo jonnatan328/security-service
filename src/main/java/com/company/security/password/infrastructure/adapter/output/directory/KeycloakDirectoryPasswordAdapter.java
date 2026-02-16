@@ -13,12 +13,14 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 import java.util.Map;
 
 public class KeycloakDirectoryPasswordAdapter implements DirectoryPasswordPort {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakDirectoryPasswordAdapter.class);
+    private static final String CREDENTIAL_TYPE_PASSWORD = "password";
+    private static final String GRANT_TYPE_PASSWORD = "password";
+    private static final String FORM_FIELD_PASSWORD = "password";
 
     private final WebClient webClient;
     private final KeycloakProperties keycloakProperties;
@@ -71,7 +73,7 @@ public class KeycloakDirectoryPasswordAdapter implements DirectoryPasswordPort {
                 keycloakProperties.getRealm(), userId);
 
         Map<String, Object> credential = Map.of(
-                "type", "password",
+                "type", CREDENTIAL_TYPE_PASSWORD,
                 "value", newPassword,
                 "temporary", false
         );
@@ -125,11 +127,11 @@ public class KeycloakDirectoryPasswordAdapter implements DirectoryPasswordPort {
         return webClient.post()
                 .uri(tokenUri)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData("grant_type", "password")
+                .body(BodyInserters.fromFormData("grant_type", GRANT_TYPE_PASSWORD)
                         .with("client_id", keycloakProperties.getClientId())
                         .with("client_secret", keycloakProperties.getClientSecret())
                         .with("username", username)
-                        .with("password", password))
+                        .with(FORM_FIELD_PASSWORD, password))
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)

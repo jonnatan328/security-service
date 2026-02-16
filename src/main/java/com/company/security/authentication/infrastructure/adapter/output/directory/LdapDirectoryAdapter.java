@@ -49,14 +49,12 @@ public class LdapDirectoryAdapter implements DirectoryServicePort {
     @CircuitBreaker(name = "directoryService", fallbackMethod = "authenticateFallback")
     @Retry(name = "directoryService")
     @TimeLimiter(name = "directoryService")
+    @SuppressWarnings("java:S2139") // Exceptions are logged and rethrown with context
     public Mono<AuthenticatedUser> authenticate(Credentials credentials) {
         return Mono.fromCallable(() -> {
             log.debug("Authenticating user via LDAP: {}", credentials.username());
 
             try {
-                // Build the user DN
-                String userDn = buildUserDn(credentials.username());
-
                 // Attempt to authenticate
                 boolean authenticated = ldapTemplate.authenticate(
                         ldapProperties.getUserSearchBase(),
@@ -79,8 +77,8 @@ public class LdapDirectoryAdapter implements DirectoryServicePort {
                 return userMapper.mapFromLdapContext(ctx, credentials.username());
 
             } catch (AuthenticationException e) {
-                log.warn("LDAP authentication failed for user: {} - {}", credentials.username(), e.getMessage());
-                throw new InvalidCredentialsException(credentials.username());
+                log.warn("LDAP authentication failed for user: {}", credentials.username(), e);
+                throw new InvalidCredentialsException(credentials.username(), e);
             } catch (Exception e) {
                 log.error("LDAP error during authentication for user: {}", credentials.username(), e);
                 throw new DirectoryServiceException("Failed to authenticate", e);
@@ -91,6 +89,7 @@ public class LdapDirectoryAdapter implements DirectoryServicePort {
     @Override
     @CircuitBreaker(name = "directoryService", fallbackMethod = "findByUsernameFallback")
     @Retry(name = "directoryService")
+    @SuppressWarnings("java:S2139") // Exception is logged and rethrown with context
     public Mono<AuthenticatedUser> findByUsername(String username) {
         return Mono.fromCallable(() -> {
             log.debug("Looking up user via LDAP: {}", username);
@@ -121,13 +120,6 @@ public class LdapDirectoryAdapter implements DirectoryServicePort {
                 return false;
             }
         }).subscribeOn(Schedulers.boundedElastic());
-    }
-
-    private String buildUserDn(String username) {
-        return String.format("%s=%s,%s",
-                ldapProperties.getUserDnAttribute(),
-                username,
-                ldapProperties.getUserSearchBase());
     }
 
     private String buildSearchFilter(String username) {

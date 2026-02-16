@@ -88,44 +88,40 @@ class TokenPairTest {
     @Test
     @DisplayName("Should throw NullPointerException when accessToken is null")
     void shouldThrowWhenAccessTokenNull() {
-        assertThrows(NullPointerException.class, () ->
-                TokenPair.builder()
-                        .refreshToken("refresh")
-                        .accessTokenExpiresAt(Instant.now().plusSeconds(3600))
-                        .refreshTokenExpiresAt(Instant.now().plusSeconds(86400))
-                        .build());
+        TokenPair.Builder builder = TokenPair.builder()
+                .refreshToken("refresh")
+                .accessTokenExpiresAt(Instant.now().plusSeconds(3600))
+                .refreshTokenExpiresAt(Instant.now().plusSeconds(86400));
+        assertThrows(NullPointerException.class, builder::build);
     }
 
     @Test
     @DisplayName("Should throw NullPointerException when refreshToken is null")
     void shouldThrowWhenRefreshTokenNull() {
-        assertThrows(NullPointerException.class, () ->
-                TokenPair.builder()
-                        .accessToken("access")
-                        .accessTokenExpiresAt(Instant.now().plusSeconds(3600))
-                        .refreshTokenExpiresAt(Instant.now().plusSeconds(86400))
-                        .build());
+        TokenPair.Builder builder = TokenPair.builder()
+                .accessToken("access")
+                .accessTokenExpiresAt(Instant.now().plusSeconds(3600))
+                .refreshTokenExpiresAt(Instant.now().plusSeconds(86400));
+        assertThrows(NullPointerException.class, builder::build);
     }
 
     @Test
     @DisplayName("Should throw NullPointerException when accessTokenExpiresAt is null")
     void shouldThrowWhenAccessExpiresAtNull() {
-        assertThrows(NullPointerException.class, () ->
-                TokenPair.builder()
-                        .accessToken("access")
-                        .refreshToken("refresh")
-                        .refreshTokenExpiresAt(Instant.now().plusSeconds(86400))
-                        .build());
+        TokenPair.Builder builder = TokenPair.builder()
+                .accessToken("access")
+                .refreshToken("refresh")
+                .refreshTokenExpiresAt(Instant.now().plusSeconds(86400));
+        assertThrows(NullPointerException.class, builder::build);
     }
 
     @Test
     @DisplayName("Should throw NullPointerException when refreshTokenExpiresAt is null")
     void shouldThrowWhenRefreshExpiresAtNull() {
-        assertThrows(NullPointerException.class, () ->
-                TokenPair.builder()
-                        .accessToken("access")
-                        .refreshToken("refresh")
-                        .accessTokenExpiresAt(Instant.now().plusSeconds(3600))
-                        .build());
+        TokenPair.Builder builder = TokenPair.builder()
+                .accessToken("access")
+                .refreshToken("refresh")
+                .accessTokenExpiresAt(Instant.now().plusSeconds(3600));
+        assertThrows(NullPointerException.class, builder::build);
     }
 }

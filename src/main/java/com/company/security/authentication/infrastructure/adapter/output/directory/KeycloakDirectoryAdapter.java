@@ -38,6 +38,8 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
 
     private static final Logger log = LoggerFactory.getLogger(KeycloakDirectoryAdapter.class);
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
+    private static final String USERNAME_FIELD = "username";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     private final WebClient webClient;
     private final KeycloakProperties keycloakProperties;
@@ -108,7 +110,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
                 .body(BodyInserters.fromFormData("grant_type", "password")
                         .with("client_id", keycloakProperties.getClientId())
                         .with("client_secret", keycloakProperties.getClientSecret())
-                        .with("username", username)
+                        .with(USERNAME_FIELD, username)
                         .with("password", password)
                         .with("scope", "openid profile email"))
                 .retrieve()
@@ -142,7 +144,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
 
         return webClient.get()
                 .uri(userInfoUri)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)
@@ -157,10 +159,10 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path(usersUri)
-                        .queryParam("username", username)
+                        .queryParam(USERNAME_FIELD, username)
                         .queryParam("exact", true)
                         .build())
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)
@@ -178,7 +180,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
 
         return webClient.get()
                 .uri(rolesUri)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, response ->
                         response.bodyToMono(String.class)
@@ -190,7 +192,7 @@ public class KeycloakDirectoryAdapter implements DirectoryServicePort {
     private AuthenticatedUser mapAdminUserToAuthenticatedUser(
             Map<String, Object> userData, List<Map<String, Object>> realmRoles) {
 
-        String username = (String) userData.get("username");
+        String username = (String) userData.get(USERNAME_FIELD);
 
         Set<String> roles = realmRoles.stream()
                 .map(role -> (String) role.get("name"))

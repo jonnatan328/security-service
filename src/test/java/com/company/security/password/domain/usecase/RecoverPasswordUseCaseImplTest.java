@@ -16,7 +16,6 @@ import reactor.test.StepVerifier;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,8 +65,8 @@ class RecoverPasswordUseCaseImplTest {
         when(eventPublisherPort.publishPasswordResetRequested(any(PasswordResetToken.class), anyString()))
                 .thenReturn(Mono.empty());
         when(passwordAuditPort.recordEvent(
-                eq(PasswordAuditPort.EventType.PASSWORD_RESET_REQUESTED),
-                eq(USER_ID), eq(EMAIL), eq(true), eq(null), eq(IP_ADDRESS), eq(USER_AGENT)))
+                PasswordAuditPort.EventType.PASSWORD_RESET_REQUESTED,
+                USER_ID, EMAIL, true, null, IP_ADDRESS, USER_AGENT))
                 .thenReturn(Mono.empty());
 
         StepVerifier.create(recoverPasswordUseCase.recoverPassword(EMAIL, IP_ADDRESS, USER_AGENT))
